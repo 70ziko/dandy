@@ -9,9 +9,7 @@ const CardGame = ({ numCards = 8 }) => {
   const cardsRef = useRef([]);
   const animationFrameRef = useRef();
 
-  // Setup effect
   useEffect(() => {
-    // Clean up any existing scene
     if (sceneRef.current) {
       cardsRef.current.forEach(card => card.remove());
       cardsRef.current = [];
@@ -93,11 +91,10 @@ const CardGame = ({ numCards = 8 }) => {
             
             newHoveredCard.hover();
             
-            // Spread other cards
             const hoveredIndex = cardsRef.current.indexOf(newHoveredCard);
             cardsRef.current.forEach((card, i) => {
               if (card !== newHoveredCard) {
-                const direction = i < hoveredIndex ? -1 : 1;
+                const direction = i < hoveredIndex ? 1 : -1;
                 const distance = Math.abs(i - hoveredIndex);
                 card.spreadFrom(newHoveredCard.mesh.position, direction, 0.3 * distance);
               }
@@ -116,13 +113,11 @@ const CardGame = ({ numCards = 8 }) => {
       return () => window.removeEventListener('mousemove', onMouseMove);
     };
 
-    // Ensure sequential setup
     setup();
     spawnCards();
     const cleanupRaycaster = setupRaycaster();
     window.addEventListener('resize', handleResize);
 
-    // Start animation loop only after setup is complete
     const animate = () => {
       if (!sceneRef.current) return;
 
@@ -148,9 +143,7 @@ const CardGame = ({ numCards = 8 }) => {
       window.removeEventListener('resize', handleResize);
       cleanupRaycaster();
     };
-  }, [numCards]); // Re-run setup when numCards changes
-
-  // Remove the separate animation effect since it's now part of the main effect
+  }, [numCards]); 
 
   return <div ref={mountRef} className="w-full h-screen" />;
 };

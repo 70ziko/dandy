@@ -6,11 +6,9 @@ export class Card {
     this.scene = scene;
     this.mesh = this.createMesh();
     
-    // Store initial values
     this.basePosition = position.clone();
     this.baseRotation = rotation.clone();
     
-    // Set initial position and rotation
     this.mesh.position.copy(position);
     this.mesh.rotation.copy(rotation);
     this.scene.add(this.mesh);
@@ -33,7 +31,6 @@ export class Card {
   }
 
   startFloatingAnimation() {
-    // Create infinite floating animation
     this.floatingAnimation = gsap.to(this.mesh.position, {
       y: this.basePosition.y + 0.1,
       duration: 1,
@@ -86,7 +83,6 @@ export class Card {
       this.currentTween.kill();
     }
     
-    // Create a timeline for synchronized animations
     const tl = gsap.timeline({
       onComplete: () => {
         console.log("Hover animation complete");
@@ -94,8 +90,8 @@ export class Card {
     });
     
     tl.to(this.mesh.position, {
-      y: this.basePosition.y + 1.5,
-      z: this.basePosition.z - 0.8,
+      y: this.basePosition.y + 0.5,
+      z: this.basePosition.z - 0.4,
       duration: 0.4,
       ease: "back.out(1.7)"
     })
@@ -103,7 +99,7 @@ export class Card {
       x: -0.2,
       duration: 0.3,
       ease: "power2.out"
-    }, "-=0.2"); // Start slightly before position animation ends
+    }, "-=0.2");
     
     this.currentTween = tl;
   }
