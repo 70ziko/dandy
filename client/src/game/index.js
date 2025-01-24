@@ -91,14 +91,14 @@ const CardGame = ({ numCards = 8 }) => {
           
           if (intersects.length > 0 && !card.isHovered) {
             card.hover();
-            const hoveredIndex = cardsRef.current.indexOf(card);
-            cardsRef.current.forEach((otherCard, i) => {
-              if (otherCard !== card) {
-                const direction = i < hoveredIndex ? 1 : -1;
-                const distance = Math.abs(i - hoveredIndex);
-                otherCard.spreadFrom(card.mesh.position, direction, 0.3 * distance);
-              }
-            });
+            // const hoveredIndex = cardsRef.current.indexOf(card);
+            // cardsRef.current.forEach((otherCard, i) => {
+            //   if (otherCard !== card) {
+            //     const direction = i < hoveredIndex ? 1 : -1;
+            //     const distance = Math.abs(i - hoveredIndex);
+            //     otherCard.spreadFrom(card.mesh.position, direction, 0.3 * distance);
+            //   }
+            // });
           } else if (intersects.length === 0 && card.isHovered) {
             card.unhover();
             card.resetPosition();

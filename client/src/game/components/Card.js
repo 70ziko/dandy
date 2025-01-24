@@ -90,8 +90,8 @@ export class Card {
   }
 
   createHitbox() {
-    const width = 1; // Slightly larger than card
-    const height = 2; // Scaled with card's aspect ratio
+    const width = 1;
+    const height = 2;
     const geometry = new THREE.PlaneGeometry(width, height);
     const material = new THREE.MeshBasicMaterial({
       transparent: true,
@@ -174,7 +174,7 @@ export class Card {
       ease: "back.out(1.7)"
     })
     .to(this.mesh.rotation, {
-      x: -Math.PI * 0.1, // Adjusted tilt for table perspective
+      x: -Math.PI * 0.1,
       duration: 0.3,
       ease: "power2.out"
     }, "-=0.2");
