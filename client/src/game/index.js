@@ -79,46 +79,31 @@ const CardGame = ({ numCards = 8 }) => {
     const setupRaycaster = () => {
       const raycaster = new THREE.Raycaster();
       const mouse = new THREE.Vector2();
-      let hoveredCard = null;
 
       const onMouseMove = (event) => {
         mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
         mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
         raycaster.setFromCamera(mouse, sceneRef.current.camera);
-        const intersects = raycaster.intersectObjects(
-          cardsRef.current.map(card => card.mesh)
-        );
-
-        if (intersects.length > 0) {
-          const newHoveredCard = cardsRef.current.find(
-            card => card.mesh === intersects[0].object
-          );
+        
+        cardsRef.current.forEach(card => {
+          const intersects = raycaster.intersectObject(card.hitbox);
           
-          if (hoveredCard !== newHoveredCard) {            
-            if (hoveredCard) {
-              hoveredCard.unhover();
-              cardsRef.current.forEach(card => card.resetPosition());
-            }
-            
-            newHoveredCard.hover();
-            
-            const hoveredIndex = cardsRef.current.indexOf(newHoveredCard);
-            cardsRef.current.forEach((card, i) => {
-              if (card !== newHoveredCard) {
+          if (intersects.length > 0 && !card.isHovered) {
+            card.hover();
+            const hoveredIndex = cardsRef.current.indexOf(card);
+            cardsRef.current.forEach((otherCard, i) => {
+              if (otherCard !== card) {
                 const direction = i < hoveredIndex ? 1 : -1;
                 const distance = Math.abs(i - hoveredIndex);
-                card.spreadFrom(newHoveredCard.mesh.position, direction, 0.3 * distance);
+                otherCard.spreadFrom(card.mesh.position, direction, 0.3 * distance);
               }
             });
-            
-            hoveredCard = newHoveredCard;
+          } else if (intersects.length === 0 && card.isHovered) {
+            card.unhover();
+            card.resetPosition();
           }
-        } else if (hoveredCard) {
-          hoveredCard.unhover();
-          cardsRef.current.forEach(card => card.resetPosition());
-          hoveredCard = null;
-        }
+        });
       };
 
       window.addEventListener('mousemove', onMouseMove);

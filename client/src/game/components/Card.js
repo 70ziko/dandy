@@ -5,13 +5,18 @@ export class Card {
   constructor(scene, position = new THREE.Vector3(), rotation = new THREE.Euler()) {
     this.scene = scene;
     this.mesh = this.createMesh();
+    this.hitbox = this.createHitbox();
     
     this.basePosition = position.clone();
     this.baseRotation = rotation.clone();
     
     this.mesh.position.copy(position);
     this.mesh.rotation.copy(rotation);
+    this.hitbox.position.copy(position);
+    this.hitbox.rotation.copy(rotation);
+    
     this.scene.add(this.mesh);
+    this.scene.add(this.hitbox);
     
     this.isHovered = false;
     this.currentTween = null;
@@ -82,6 +87,18 @@ export class Card {
     geometry.center();
     
     return mesh;
+  }
+
+  createHitbox() {
+    const width = 1; // Slightly larger than card
+    const height = 2; // Scaled with card's aspect ratio
+    const geometry = new THREE.PlaneGeometry(width, height);
+    const material = new THREE.MeshBasicMaterial({
+      transparent: true,
+      opacity: 0,
+      side: THREE.DoubleSide
+    });
+    return new THREE.Mesh(geometry, material);
   }
 
   startFloatingAnimation() {
@@ -202,7 +219,9 @@ export class Card {
 
   remove() {
     this.scene.remove(this.mesh);
+    this.scene.remove(this.hitbox);
     this.mesh.geometry.dispose();
+    this.hitbox.geometry.dispose();
     if (Array.isArray(this.mesh.material)) {
       this.mesh.material.forEach(material => material.dispose());
     } else {
