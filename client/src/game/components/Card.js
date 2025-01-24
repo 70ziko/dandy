@@ -152,12 +152,12 @@ export class Card {
     
     tl.to(this.mesh.position, {
       y: this.basePosition.y + 0.5,
-      z: this.basePosition.z - 0.4,
+      z: this.basePosition.z - 0.5,
       duration: 0.4,
       ease: "back.out(1.7)"
     })
     .to(this.mesh.rotation, {
-      x: -0.2,
+      x: -Math.PI * 0.1, // Adjusted tilt for table perspective
       duration: 0.3,
       ease: "power2.out"
     }, "-=0.2");

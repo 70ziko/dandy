@@ -26,12 +26,23 @@ const CardGame = ({ numCards = 8 }) => {
       renderer.setClearColor(0x1a1a1a);
       mountRef.current.appendChild(renderer.domElement);
 
+      const tableGeometry = new THREE.PlaneGeometry(20, 20);
+      const tableMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0x004400,
+        side: THREE.DoubleSide,
+      });
+      const table = new THREE.Mesh(tableGeometry, tableMaterial);
+      table.rotation.x = -Math.PI * 0.5;
+      table.position.y = -5;
+      scene.add(table);
+
       scene.add(new THREE.AmbientLight(0xffffff, 0.5));
       const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-      directionalLight.position.set(0, 1, 2);
+      directionalLight.position.set(0, 5, 5);
       scene.add(directionalLight);
 
-      camera.position.z = 5;
+      camera.position.set(0, 2, 8);
+      camera.lookAt(0, -2, 0);
       sceneRef.current = { scene, camera, renderer };
     };
 
@@ -39,19 +50,19 @@ const CardGame = ({ numCards = 8 }) => {
       cardsRef.current.forEach(card => card.remove());
       cardsRef.current = [];
       
-      const fanRadius = 3;
+      const fanRadius = 4;
       const fanSpread = Math.PI / 4;
       const centerAngle = Math.PI / 2;
-      const zOffset = 0.1; 
+      const zOffset = 0.1;
 
       for (let i = 0; i < numCards; i++) {
         const angle = centerAngle + fanSpread * (i / (numCards - 1) - 0.5);
         const xPos = Math.cos(angle) * fanRadius;
-        const yPos = Math.sin(angle) * fanRadius - 4;
-        const zPos = i * zOffset; 
+        const yPos = (Math.sin(angle) * fanRadius) - 6; 
+        const zPos = (i * zOffset) + 3;
         
         const position = new THREE.Vector3(xPos, yPos, zPos);
-        const rotation = new THREE.Euler(0, 0, angle + Math.PI / 2);
+        const rotation = new THREE.Euler(-Math.PI * 0.2, 0, angle + Math.PI / 2);
         
         const card = new Card(sceneRef.current.scene, position, rotation);
         cardsRef.current.push(card);
