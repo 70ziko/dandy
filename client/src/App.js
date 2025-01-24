@@ -1,5 +1,5 @@
 import React from 'react';
-import CardGame from './CardGame';
+import CardGame from './game';
 
 function App() {
   return (
