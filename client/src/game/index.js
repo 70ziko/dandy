@@ -36,20 +36,21 @@ const CardGame = ({ numCards = 8 }) => {
     };
 
     const spawnCards = () => {
-      // Clear existing cards
       cardsRef.current.forEach(card => card.remove());
       cardsRef.current = [];
       
       const fanRadius = 3;
       const fanSpread = Math.PI / 4;
       const centerAngle = Math.PI / 2;
+      const zOffset = 0.1; 
 
       for (let i = 0; i < numCards; i++) {
         const angle = centerAngle + fanSpread * (i / (numCards - 1) - 0.5);
         const xPos = Math.cos(angle) * fanRadius;
-        const yPos = Math.sin(angle) * fanRadius - 2;
+        const yPos = Math.sin(angle) * fanRadius - 4;
+        const zPos = i * zOffset; 
         
-        const position = new THREE.Vector3(xPos, yPos, 0);
+        const position = new THREE.Vector3(xPos, yPos, zPos);
         const rotation = new THREE.Euler(0, 0, angle + Math.PI / 2);
         
         const card = new Card(sceneRef.current.scene, position, rotation);
