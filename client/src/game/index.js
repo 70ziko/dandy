@@ -8,12 +8,16 @@ const CardGame = ({ numCards = 8 }) => {
   const sceneRef = useRef(null);
   const cardsRef = useRef([]);
   const animationFrameRef = useRef();
-  const isInitializedRef = useRef(false);
 
-  // Setup effect - runs once
+  // Setup effect
   useEffect(() => {
-    if (isInitializedRef.current) return;
-    isInitializedRef.current = true;
+    // Clean up any existing scene
+    if (sceneRef.current) {
+      cardsRef.current.forEach(card => card.remove());
+      cardsRef.current = [];
+      const { renderer } = sceneRef.current;
+      mountRef.current?.removeChild(renderer.domElement);
+    }
 
     const setup = () => {
       const scene = new THREE.Scene();
@@ -34,6 +38,10 @@ const CardGame = ({ numCards = 8 }) => {
     };
 
     const spawnCards = () => {
+      // Clear existing cards
+      cardsRef.current.forEach(card => card.remove());
+      cardsRef.current = [];
+      
       const fanRadius = 3;
       const fanSpread = Math.PI / 4;
       const centerAngle = Math.PI / 2;
@@ -108,41 +116,21 @@ const CardGame = ({ numCards = 8 }) => {
       return () => window.removeEventListener('mousemove', onMouseMove);
     };
 
+    // Ensure sequential setup
     setup();
     spawnCards();
     const cleanupRaycaster = setupRaycaster();
     window.addEventListener('resize', handleResize);
 
-    return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-      cardsRef.current.forEach(card => card.remove());
-      cardsRef.current = [];
-      const { renderer } = sceneRef.current;
-      mountRef.current?.removeChild(renderer.domElement);
-      window.removeEventListener('resize', handleResize);
-      cleanupRaycaster();
-    };
-  }, []);
-
-  // Separate animation effect - runs continuously
-  useEffect(() => {
-    if (!sceneRef.current) return;
-
+    // Start animation loop only after setup is complete
     const animate = () => {
       if (!sceneRef.current) return;
 
-      // Update GSAP animations
       gsap.updateRoot(Date.now() / 1000);
-
-      // Render scene
       sceneRef.current.renderer.render(
         sceneRef.current.scene, 
         sceneRef.current.camera
       );
-
-      // Continue animation loop
       animationFrameRef.current = requestAnimationFrame(animate);
     };
 
@@ -152,8 +140,17 @@ const CardGame = ({ numCards = 8 }) => {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
+      cardsRef.current.forEach(card => card.remove());
+      cardsRef.current = [];
+      if (sceneRef.current?.renderer) {
+        mountRef.current?.removeChild(sceneRef.current.renderer.domElement);
+      }
+      window.removeEventListener('resize', handleResize);
+      cleanupRaycaster();
     };
-  }, []);
+  }, [numCards]); // Re-run setup when numCards changes
+
+  // Remove the separate animation effect since it's now part of the main effect
 
   return <div ref={mountRef} className="w-full h-screen" />;
 };
