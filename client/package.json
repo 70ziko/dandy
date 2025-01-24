@@ -5,6 +5,8 @@
   "dependencies": {
     "@tweenjs/tween.js": "^25.0.0",
     "cra-template": "1.2.0",
+    "gasp": "^0.0.2",
+    "gsap": "^3.12.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-scripts": "5.0.1",

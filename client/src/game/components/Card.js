@@ -1,17 +1,24 @@
-// Card.js
 import * as THREE from 'three';
-import TWEEN from '@tweenjs/tween.js';
+import gsap from 'gsap';
 
 export class Card {
   constructor(scene, position = new THREE.Vector3(), rotation = new THREE.Euler()) {
     this.scene = scene;
     this.mesh = this.createMesh();
-    this.initialPosition = position.clone();
-    this.initialRotation = rotation.clone();
-    this.setPosition(position);
-    this.setRotation(rotation);
+    
+    // Store initial values
+    this.basePosition = position.clone();
+    this.baseRotation = rotation.clone();
+    
+    // Set initial position and rotation
+    this.mesh.position.copy(position);
+    this.mesh.rotation.copy(rotation);
     this.scene.add(this.mesh);
+    
     this.isHovered = false;
+    this.currentTween = null;
+    this.floatingAnimation = null;
+    this.startFloatingAnimation();
   }
 
   createMesh() {
@@ -25,53 +32,113 @@ export class Card {
     return new THREE.Mesh(geometry, material);
   }
 
-  setPosition(position) {
-    this.mesh.position.copy(position);
-  }
-
-  setRotation(rotation) {
-    this.mesh.rotation.copy(rotation);
+  startFloatingAnimation() {
+    // Create infinite floating animation
+    this.floatingAnimation = gsap.to(this.mesh.position, {
+      y: this.basePosition.y + 0.1,
+      duration: 1,
+      yoyo: true,
+      repeat: -1,
+      ease: "sine.inOut"
+    });
   }
 
   spreadFrom(center, direction, amount) {
-    const targetPosition = this.initialPosition.clone();
-    targetPosition.x += direction * amount;
+    if (this.isHovered) return;
     
-    new TWEEN.Tween(this.mesh.position)
-      .to({ x: targetPosition.x }, 300)
-      .easing(TWEEN.Easing.Quadratic.Out)
-      .start();
+    const targetX = this.basePosition.x + (direction * amount);
+    
+    if (this.currentTween) {
+      this.currentTween.kill();
+    }
+    
+    this.currentTween = gsap.to(this.mesh.position, {
+      x: targetX,
+      duration: 0.5,
+      ease: "power2.out"
+    });
   }
 
   resetPosition() {
     if (!this.isHovered) {
-      new TWEEN.Tween(this.mesh.position)
-        .to({ 
-          x: this.initialPosition.x,
-          y: this.initialPosition.y
-        }, 300)
-        .easing(TWEEN.Easing.Quadratic.Out)
-        .start();
-    }
-  }
-
-  animate(timestamp, index) {
-    if (!this.isHovered) {
-      this.mesh.position.y += Math.sin(timestamp * 0.001 + index * 0.5) * 0.001;
+      if (this.currentTween) {
+        this.currentTween.kill();
+      }
+      
+      this.currentTween = gsap.to(this.mesh.position, {
+        x: this.basePosition.x,
+        y: this.basePosition.y,
+        z: this.basePosition.z,
+        duration: 0.5,
+        ease: "power2.out"
+      });
     }
   }
 
   hover() {
     this.isHovered = true;
-    new TWEEN.Tween(this.mesh.position)
-      .to({ y: this.initialPosition.y + 0.5 }, 300)
-      .easing(TWEEN.Easing.Quadratic.Out)
-      .start();
+    
+    if (this.floatingAnimation) {
+      this.floatingAnimation.pause();
+    }
+    
+    if (this.currentTween) {
+      this.currentTween.kill();
+    }
+    
+    // Create a timeline for synchronized animations
+    const tl = gsap.timeline({
+      onComplete: () => {
+        console.log("Hover animation complete");
+      }
+    });
+    
+    tl.to(this.mesh.position, {
+      y: this.basePosition.y + 1.5,
+      z: this.basePosition.z - 0.8,
+      duration: 0.4,
+      ease: "back.out(1.7)"
+    })
+    .to(this.mesh.rotation, {
+      x: -0.2,
+      duration: 0.3,
+      ease: "power2.out"
+    }, "-=0.2"); // Start slightly before position animation ends
+    
+    this.currentTween = tl;
   }
 
   unhover() {
     this.isHovered = false;
-    this.resetPosition();
+    
+    if (this.currentTween) {
+      this.currentTween.kill();
+    }
+    
+    const tl = gsap.timeline({
+      onComplete: () => {
+        if (!this.isHovered) {
+          this.startFloatingAnimation();
+        }
+      }
+    });
+    
+    tl.to(this.mesh.position, {
+      x: this.basePosition.x,
+      y: this.basePosition.y,
+      z: this.basePosition.z,
+      duration: 0.4,
+      ease: "power3.out"
+    })
+    .to(this.mesh.rotation, {
+      x: this.baseRotation.x,
+      y: this.baseRotation.y,
+      z: this.baseRotation.z,
+      duration: 0.3,
+      ease: "power2.out"
+    }, "-=0.2");
+    
+    this.currentTween = tl;
   }
 
   remove() {

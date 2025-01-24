@@ -1,15 +1,20 @@
-// CardGame.js
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import TWEEN from '@tweenjs/tween.js';
 import { Card } from './components/Card';
+import gsap from 'gsap';
 
-const CardGame = ({ numCards = 5 }) => {
+const CardGame = ({ numCards = 8 }) => {
   const mountRef = useRef(null);
   const sceneRef = useRef(null);
   const cardsRef = useRef([]);
+  const animationFrameRef = useRef();
+  const isInitializedRef = useRef(false);
 
+  // Setup effect - runs once
   useEffect(() => {
+    if (isInitializedRef.current) return;
+    isInitializedRef.current = true;
+
     const setup = () => {
       const scene = new THREE.Scene();
       const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -46,15 +51,6 @@ const CardGame = ({ numCards = 5 }) => {
       }
     };
 
-    const animate = () => {
-      requestAnimationFrame(animate);
-      TWEEN.update();
-      cardsRef.current.forEach((card, index) => {
-        card.animate(Date.now(), index);
-      });
-      sceneRef.current.renderer.render(sceneRef.current.scene, sceneRef.current.camera);
-    };
-
     const handleResize = () => {
       const { camera, renderer } = sceneRef.current;
       camera.aspect = window.innerWidth / window.innerHeight;
@@ -80,11 +76,13 @@ const CardGame = ({ numCards = 5 }) => {
           const newHoveredCard = cardsRef.current.find(
             card => card.mesh === intersects[0].object
           );
-          if (hoveredCard !== newHoveredCard) {
+          
+          if (hoveredCard !== newHoveredCard) {            
             if (hoveredCard) {
               hoveredCard.unhover();
               cardsRef.current.forEach(card => card.resetPosition());
             }
+            
             newHoveredCard.hover();
             
             // Spread other cards
@@ -101,6 +99,7 @@ const CardGame = ({ numCards = 5 }) => {
           }
         } else if (hoveredCard) {
           hoveredCard.unhover();
+          cardsRef.current.forEach(card => card.resetPosition());
           hoveredCard = null;
         }
       };
@@ -111,11 +110,13 @@ const CardGame = ({ numCards = 5 }) => {
 
     setup();
     spawnCards();
-    animate();
     const cleanupRaycaster = setupRaycaster();
     window.addEventListener('resize', handleResize);
 
     return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
       cardsRef.current.forEach(card => card.remove());
       cardsRef.current = [];
       const { renderer } = sceneRef.current;
@@ -123,7 +124,36 @@ const CardGame = ({ numCards = 5 }) => {
       window.removeEventListener('resize', handleResize);
       cleanupRaycaster();
     };
-  }, [numCards]);
+  }, []);
+
+  // Separate animation effect - runs continuously
+  useEffect(() => {
+    if (!sceneRef.current) return;
+
+    const animate = () => {
+      if (!sceneRef.current) return;
+
+      // Update GSAP animations
+      gsap.updateRoot(Date.now() / 1000);
+
+      // Render scene
+      sceneRef.current.renderer.render(
+        sceneRef.current.scene, 
+        sceneRef.current.camera
+      );
+
+      // Continue animation loop
+      animationFrameRef.current = requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, []);
 
   return <div ref={mountRef} className="w-full h-screen" />;
 };
