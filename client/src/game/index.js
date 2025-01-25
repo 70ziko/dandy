@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { Card } from './components/Card';
 import gsap from 'gsap';
 
-const CardGame = ({ numCards = 8 }) => {
+const CardGame = ({ numCards = 5 }) => {
   const mountRef = useRef(null);
   const sceneRef = useRef(null);
   const cardsRef = useRef([]);
@@ -51,9 +51,9 @@ const CardGame = ({ numCards = 8 }) => {
       cardsRef.current = [];
       
       const fanRadius = 4;
-      const fanSpread = Math.PI / 4;
+      const fanSpread = Math.PI / 3;
       const centerAngle = Math.PI / 2;
-      const zOffset = 0.1;
+      const zOffset = 0.07;
 
       for (let i = 0; i < numCards; i++) {
         const angle = centerAngle + fanSpread * (i / (numCards - 1) - 0.5);

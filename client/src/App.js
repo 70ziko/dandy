@@ -4,7 +4,7 @@ import CardGame from './game';
 function App() {
   return (
     <div className="App">
-      <CardGame numCards={5} />
+      <CardGame numCards={8} />
     </div>
   );
 }
