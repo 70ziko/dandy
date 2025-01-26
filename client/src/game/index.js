@@ -10,12 +10,11 @@ const CardGame = ({ numCards = 5 }) => {
   const animationFrameRef = useRef();
 
   useEffect(() => {
-    const mountNode = mountRef.current;
     if (sceneRef.current) {
       cardsRef.current.forEach(card => card.remove());
       cardsRef.current = [];
       const { renderer } = sceneRef.current;
-      mountNode?.removeChild(renderer.domElement);
+      mountRef.current?.removeChild(renderer.domElement);
     }
 
     const setup = () => {
@@ -60,7 +59,7 @@ const CardGame = ({ numCards = 5 }) => {
         const angle = centerAngle + fanSpread * (i / (numCards - 1) - 0.5);
         const xPos = Math.cos(angle) * fanRadius;
         const yPos = (Math.sin(angle) * fanRadius) - 6; 
-        const zPos = (i * zOffset) + 3;
+        const zPos = (i * zOffset) + 5;
         
         const position = new THREE.Vector3(xPos, yPos, zPos);
         const rotation = new THREE.Euler(-Math.PI * 0.2, 0, angle + Math.PI / 2);
@@ -136,9 +135,9 @@ const CardGame = ({ numCards = 5 }) => {
       const currentScene = sceneRef.current;
       if (currentScene) {
         cardsRef.current.forEach(card => card.remove());
-        if (currentScene.renderer && mountNode) {
-          mountNode.removeChild(currentScene.renderer.domElement);
-        }
+        cardsRef.current = [];
+        if (currentScene.renderer && mountRef.current) {
+          mountRef.current.removeChild(currentScene.renderer.domElement);
         }
       }
       window.removeEventListener('resize', handleResize);
