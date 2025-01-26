@@ -53,12 +53,12 @@ const CardGame = ({ numCards = 5 }) => {
       const fanRadius = 4;
       const fanSpread = Math.PI / 3;
       const centerAngle = Math.PI / 2;
-      const zOffset = 0.07;
+      const zOffset = 0.02;
 
       for (let i = 0; i < numCards; i++) {
         const angle = centerAngle + fanSpread * (i / (numCards - 1) - 0.5);
         const xPos = Math.cos(angle) * fanRadius;
-        const yPos = (Math.sin(angle) * fanRadius) - 6; 
+        const yPos = (Math.sin(angle) * fanRadius) - 6;
         const zPos = (i * zOffset) + 5;
         
         const position = new THREE.Vector3(xPos, yPos, zPos);

@@ -30,7 +30,7 @@ export class Card {
   createMesh() {
     const width = 1;
     const height = 1.618;
-    const thickness = 0.02;
+    const thickness = 0.0;
     const radius = 0.05;
 
     const shape = new THREE.Shape();
@@ -61,23 +61,23 @@ export class Card {
     const frontTexture = textureLoader.load('/assets/black-reverse.jpg');
     const backTexture = textureLoader.load('/assets/black-reverse.jpg');
     
-    const frontMaterial = new THREE.MeshStandardMaterial({ 
+    const frontMaterial = new THREE.MeshPhongMaterial({ 
       map: frontTexture,
-      side: THREE.FrontSide
+      side: THREE.FrontSide,
+      shininess: 0,
+      depthWrite: true,
+      depthTest: true
     });
     
-    const backMaterial = new THREE.MeshStandardMaterial({ 
+    const backMaterial = new THREE.MeshPhongMaterial({ 
       map: backTexture,
-      side: THREE.BackSide
+      side: THREE.BackSide,
+      shininess: 0,
+      depthWrite: true,
+      depthTest: true
     });
     
-    // const sideMaterial = new THREE.MeshStandardMaterial({ 
-    //   color: 0xFFFFFF,
-    //   side: THREE.FrontSide
-    // });
-
     const materials = [
-    //   sideMaterial, 
       frontMaterial,
       backMaterial 
     ];
@@ -157,6 +157,7 @@ export class Card {
 
   hover() {
     this.isHovered = true;
+    console.log('hovered card: ', this);
     
     if (this.floatingAnimation) {
       this.floatingAnimation.kill();
