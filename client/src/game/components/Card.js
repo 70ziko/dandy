@@ -66,7 +66,10 @@ export class Card {
       side: THREE.FrontSide,
       shininess: 0,
       depthWrite: true,
-      depthTest: true
+      depthTest: true,
+      polygonOffset: true,
+      polygonOffsetFactor: 1,
+      polygonOffsetUnits: 1
     });
     
     const backMaterial = new THREE.MeshPhongMaterial({ 
@@ -74,7 +77,10 @@ export class Card {
       side: THREE.BackSide,
       shininess: 0,
       depthWrite: true,
-      depthTest: true
+      depthTest: true,
+      polygonOffset: true,
+      polygonOffsetFactor: 1,
+      polygonOffsetUnits: 1
     });
     
     const materials = [
