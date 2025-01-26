@@ -10,11 +10,12 @@ const CardGame = ({ numCards = 5 }) => {
   const animationFrameRef = useRef();
 
   useEffect(() => {
+    const mountNode = mountRef.current;
     if (sceneRef.current) {
       cardsRef.current.forEach(card => card.remove());
       cardsRef.current = [];
       const { renderer } = sceneRef.current;
-      mountRef.current?.removeChild(renderer.domElement);
+      mountNode?.removeChild(renderer.domElement);
     }
 
     const setup = () => {
@@ -41,8 +42,8 @@ const CardGame = ({ numCards = 5 }) => {
       directionalLight.position.set(0, 5, 5);
       scene.add(directionalLight);
 
-      camera.position.set(0, 2, 8);
-      camera.lookAt(0, -2, 0);
+      camera.position.set(0, 3, 10);
+      camera.lookAt(0, -3, 0);
       sceneRef.current = { scene, camera, renderer };
     };
 
@@ -96,7 +97,7 @@ const CardGame = ({ numCards = 5 }) => {
             //   if (otherCard !== card) {
             //     const direction = i < hoveredIndex ? 1 : -1;
             //     const distance = Math.abs(i - hoveredIndex);
-            //     otherCard.spreadFrom(card.mesh.position, direction, 0.3 * distance);
+            //     otherCard.spreadFrom(card.mesh.position, direction, 0.5 * distance);
             //   }
             // });
           } else if (intersects.length === 0 && card.isHovered) {
@@ -132,10 +133,13 @@ const CardGame = ({ numCards = 5 }) => {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
-      cardsRef.current.forEach(card => card.remove());
-      cardsRef.current = [];
-      if (sceneRef.current?.renderer) {
-        mountRef.current?.removeChild(sceneRef.current.renderer.domElement);
+      const currentScene = sceneRef.current;
+      if (currentScene) {
+        cardsRef.current.forEach(card => card.remove());
+        if (currentScene.renderer && mountNode) {
+          mountNode.removeChild(currentScene.renderer.domElement);
+        }
+        }
       }
       window.removeEventListener('resize', handleResize);
       cleanupRaycaster();

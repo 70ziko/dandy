@@ -102,13 +102,18 @@ export class Card {
   }
 
   startFloatingAnimation() {
-    this.floatingAnimation = gsap.to(this.mesh.position, {
-      y: this.basePosition.y + 0.1,
-      duration: 1,
-      yoyo: true,
-      repeat: -1,
-      ease: "sine.inOut"
-    });
+    if (this.floatingAnimation) {
+      this.floatingAnimation.kill();
+    }
+    if (!this.isHovered) {
+      this.floatingAnimation = gsap.to(this.mesh.position, {
+        y: this.basePosition.y + 0.1,
+        duration: 1.5,
+        yoyo: true,
+        repeat: -1,
+        ease: "sine.inOut"
+      });
+    }
   }
 
   spreadFrom(center, direction, amount) {
@@ -154,18 +159,14 @@ export class Card {
     this.isHovered = true;
     
     if (this.floatingAnimation) {
-      this.floatingAnimation.pause();
+      this.floatingAnimation.kill();
     }
     
     if (this.currentTween) {
       this.currentTween.kill();
     }
     
-    const tl = gsap.timeline({
-      onComplete: () => {
-        console.log("Hover animation complete");
-      }
-    });
+    const tl = gsap.timeline();
     
     tl.to(this.mesh.position, {
       y: this.basePosition.y + 0.5,
