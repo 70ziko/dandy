@@ -65,8 +65,7 @@ export class Card {
       map: frontTexture,
       side: THREE.FrontSide,
       shininess: 0,
-      depthWrite: true,
-      depthTest: true,
+      depthTest: false,
       polygonOffset: true,
       polygonOffsetFactor: 1,
       polygonOffsetUnits: 1
@@ -76,8 +75,7 @@ export class Card {
       map: backTexture,
       side: THREE.BackSide,
       shininess: 0,
-      depthWrite: true,
-      depthTest: true,
+      depthTest: false,
       polygonOffset: true,
       polygonOffsetFactor: 1,
       polygonOffsetUnits: 1
