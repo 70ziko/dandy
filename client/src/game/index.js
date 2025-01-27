@@ -46,14 +46,24 @@ const CardGame = ({ numCards = 5 }) => {
       sceneRef.current = { scene, camera, renderer };
     };
 
+    const calculateFanProperties = (numCards) => {
+      const fanRadius = 1.5 + ((numCards + 1) * 0.1);
+      
+      const maxSpread = Math.PI * 2/3; // 120 degrees
+      const minSpread = Math.PI / 6;   // 22.5 degrees
+      const fanSpread = Math.min(maxSpread, minSpread + (numCards * 0.1));
+      
+      const zOffset = Math.max(0.01, 0.05 - (numCards * 0.002));
+      
+      return { fanRadius, fanSpread, zOffset };
+    };
+
     const spawnCards = () => {
       cardsRef.current.forEach(card => card.remove());
       cardsRef.current = [];
       
-      const fanRadius = 4;
-      const fanSpread = Math.PI / 3;
+      const { fanRadius, fanSpread, zOffset } = calculateFanProperties(numCards);
       const centerAngle = Math.PI / 2;
-      const zOffset = 0.02;
 
       for (let i = 0; i < numCards; i++) {
         const angle = centerAngle + fanSpread * (i / (numCards - 1) - 0.5);
