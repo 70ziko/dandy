@@ -10,12 +10,22 @@ const CardGame = ({ numCards = 5 }) => {
   const animationFrameRef = useRef();
 
   useEffect(() => {
-    if (sceneRef.current) {
-      cardsRef.current.forEach(card => card.remove());
-      cardsRef.current = [];
-      const { renderer } = sceneRef.current;
-      mountRef.current?.removeChild(renderer.domElement);
-    }
+    const mountElement = mountRef.current;
+
+    const cleanupScene = () => {
+      if (sceneRef.current) {
+        cardsRef.current.forEach(card => card.remove());
+        cardsRef.current = [];
+        const { renderer } = sceneRef.current;
+        if (renderer.domElement && renderer.domElement.parentNode) {
+          renderer.domElement.parentNode.removeChild(renderer.domElement);
+        }
+        renderer.dispose();
+        sceneRef.current = null;
+      }
+    };
+
+    cleanupScene();
 
     const setup = () => {
       const scene = new THREE.Scene();
@@ -24,7 +34,9 @@ const CardGame = ({ numCards = 5 }) => {
       
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setClearColor(0x1a1a1a);
-      mountRef.current.appendChild(renderer.domElement);
+      if (mountElement) {
+        mountElement.appendChild(renderer.domElement);
+      }
 
       const tableGeometry = new THREE.PlaneGeometry(20, 20);
       const tableMaterial = new THREE.MeshStandardMaterial({ 
@@ -142,14 +154,7 @@ const CardGame = ({ numCards = 5 }) => {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
-      const currentScene = sceneRef.current;
-      if (currentScene) {
-        cardsRef.current.forEach(card => card.remove());
-        cardsRef.current = [];
-        if (currentScene.renderer && mountRef.current) {
-          mountRef.current.removeChild(currentScene.renderer.domElement);
-        }
-      }
+      cleanupScene();
       window.removeEventListener('resize', handleResize);
       cleanupRaycaster();
     };
