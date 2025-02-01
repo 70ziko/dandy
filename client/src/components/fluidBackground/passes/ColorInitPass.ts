@@ -1,7 +1,6 @@
 import {
   BufferAttribute,
   BufferGeometry,
-  HalfFloatType,
   Mesh,
   OrthographicCamera,
   RawShaderMaterial,
@@ -9,16 +8,16 @@ import {
   Scene,
   Texture,
   Uniform,
+  UnsignedByteType,
   Vector2,
   WebGLRenderer,
   WebGLRenderTarget
 } from "three";
 
-export class VelocityInitPass {
-  public readonly scene: Scene;
-  public readonly camera: OrthographicCamera;
+export class ColorInitPass {
+  private readonly scene: Scene;
+  private readonly camera: OrthographicCamera;
 
-  private geometry: BufferGeometry;
   private material: RawShaderMaterial;
   private mesh: Mesh;
 
@@ -30,13 +29,13 @@ export class VelocityInitPass {
 
     this.renderTarget = new WebGLRenderTarget(resolution.x, resolution.y, {
       format: RGBFormat,
-      type: HalfFloatType,
+      type: UnsignedByteType,
       depthBuffer: false,
       stencilBuffer: false
     });
 
-    this.geometry = new BufferGeometry();
-    this.geometry.setAttribute(
+    const geometry = new BufferGeometry();
+    geometry.setAttribute(
       "position",
       new BufferAttribute(
         new Float32Array([-1, -1, 1, -1, 1, 1, 1, 1, -1, 1, -1, -1]),
@@ -52,27 +51,26 @@ export class VelocityInitPass {
         )
       },
       vertexShader: `
-        attribute vec2 position;
-        varying vec2 clipPos;
-
-        void main() {
-          clipPos = position;
-          gl_Position = vec4(position, 0.0, 1.0);
-        }`,
+          attribute vec2 position;
+          varying vec2 clipPos;
+  
+          void main() {
+            clipPos = position;
+            gl_Position = vec4(position, 0.0, 1.0);
+          }`,
       fragmentShader: `
-        #define PI 3.1415926535897932384626433832795  
-        precision highp float;
-        precision highp int;
-        varying vec2 clipPos;
-
-        void main() {
-          vec2 v = vec2(sin(2.0 * PI * clipPos.y), sin(2.0 * PI * clipPos.x));
-          gl_FragColor = vec4(v, 0.0, 1.0);
-        }`,
+          precision highp float;
+          precision highp int;
+          varying vec2 clipPos;
+  
+          void main() {
+            vec3 color = vec3(clipPos * 0.5 + 0.5, 0.0);
+            gl_FragColor = vec4(color, 1.0);
+          }`,
       depthTest: false,
       depthWrite: false
     });
-    this.mesh = new Mesh(this.geometry, this.material);
+    this.mesh = new Mesh(geometry, this.material);
     this.mesh.frustumCulled = false; // Just here to silence a console error.
     this.scene.add(this.mesh);
   }

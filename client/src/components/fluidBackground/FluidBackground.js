@@ -11,16 +11,16 @@ import {
   WebGLRenderer
 } from "three";
 import { AdvectionPass } from "./passes/AdvectionPass";
-// import { BoundaryPass } from "./passes/BoundaryPass";
-// import { ColorInitPass } from "./passes/ColorInitPass";
-// import { CompositionPass } from "./passes/CompositionPass";
-// import { DivergencePass } from "./passes/DivergencePass";
-// import { GradientSubstractionPass } from "./passes/GradientSubstractionPass";
-// import { JacobiIterationsPass } from "./passes/JacobiIterationsPass";
+import { BoundaryPass } from "./passes/BoundaryPass";
+import { ColorInitPass } from "./passes/ColorInitPass";
+import { CompositionPass } from "./passes/CompositionPass";
+import { DivergencePass } from "./passes/DivergencePass";
+import { GradientSubstractionPass } from "./passes/GradientSubstractionPass";
+import { JacobiIterationsPass } from "./passes/JacobiIterationsPass";
 import { TouchColorPass } from "./passes/TouchColorPass";
-// import { TouchForcePass } from "./passes/TouchForcePass";
-// import { VelocityInitPass } from "./passes/VelocityInitPass";
-// import { RenderTarget } from "./RenderTarget";
+import { TouchForcePass } from "./passes/TouchForcePass";
+import { VelocityInitPass } from "./passes/VelocityInitPass";
+import { RenderTarget } from "./RenderTarget";
 
 // Gradients setup
 const gradients = ["gradient.jpg"];
@@ -82,10 +82,10 @@ const FluidBackground = () => {
     const aspect = new Vector2(resolution.x / resolution.y, 1.0);
 
     // Initialize RenderTargets.
-    // const velocityRT = new RenderTarget(resolution, 2, RGBAFormat, HalfFloatType);
-    // const divergenceRT = new RenderTarget(resolution, 1, RGBAFormat, HalfFloatType);
-    // const pressureRT = new RenderTarget(resolution, 2, RGBAFormat, HalfFloatType);
-    // const colorRT = new RenderTarget(resolution, 2, RGBFormat, UnsignedByteType);
+    const velocityRT = new RenderTarget(resolution, 2, RGBAFormat, HalfFloatType);
+    const divergenceRT = new RenderTarget(resolution, 1, RGBAFormat, HalfFloatType);
+    const pressureRT = new RenderTarget(resolution, 2, RGBAFormat, HalfFloatType);
+    const colorRT = new RenderTarget(resolution, 2, RGBFormat, UnsignedByteType);
 
     // Initialize simulation variables.
     let v, c, d, p;
