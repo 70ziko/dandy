@@ -8,7 +8,9 @@ const port = process.env.PORT || 3001;
 
 interface GameState {
   players: Map<string, string[]>; // guestId -> cards
+  turnCounter: number;
   currentTurn: string | null;
+  pokerFigures?: string[] | null;
   lastAction?: {
     player: string;
     action: string;
@@ -32,7 +34,6 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
-// TODO: Serve static files from React build once it's ready
 app.use(express.static(path.join(__dirname, '../../client/build')));
 
 function generateRandomCards(count: number): string[] {
@@ -82,7 +83,8 @@ app.get<DrawParams>('/:tableId/draw', ((req: Request<DrawParams>, res: Response)
   if (!gameStates[tableId]) {
     gameStates[tableId] = {
       players: new Map(),
-      currentTurn: null
+      currentTurn: null,
+      turnCounter: 0
     };
   }
   
@@ -119,6 +121,10 @@ app.post<ActionParams, any, ActionBody>('/:tableId/action', express.json(), ((re
 }) as RequestHandler<ActionParams>);
 
 app.get('/', ((req: Request, res: Response) => {
+  if (!req.cookies.guestId) {
+    const guestId = `guest_${crypto.randomBytes(8).toString('hex')}`;
+    res.cookie('guestId', guestId, { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 }); // 1 day
+  }
   res.sendFile(path.join(__dirname, '../../client/build', 'index.html'));
 }) as RequestHandler);
 
