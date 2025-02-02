@@ -1,8 +1,25 @@
 import * as THREE from 'three';
 import gsap from 'gsap';
 
+interface CardConstructorParams {
+  scene: THREE.Scene;
+  position?: THREE.Vector3;
+  rotation?: THREE.Euler;
+}
+
 export class Card {
-  constructor(scene, position = new THREE.Vector3(), rotation = new THREE.Euler()) {
+  private scene: THREE.Scene;
+  private mesh: THREE.Mesh;
+  private hitbox: THREE.Mesh;
+  private basePosition: THREE.Vector3;
+  private baseRotation: THREE.Euler;
+  private isHovered: boolean;
+  private currentTween: gsap.core.Timeline | gsap.core.Tween | null;
+  private floatingAnimation: gsap.core.Tween | null;
+  private originalPosition: THREE.Vector3;
+  private originalRotation: THREE.Euler;
+
+  constructor({ scene, position = new THREE.Vector3(), rotation = new THREE.Euler() }: CardConstructorParams) {
     this.scene = scene;
     this.mesh = this.createMesh();
     this.hitbox = this.createHitbox();
@@ -27,7 +44,7 @@ export class Card {
     this.originalRotation = rotation.clone();
   }
 
-  createMesh() {
+  private createMesh(): THREE.Mesh {
     const width = 1;
     const height = 1.618;
     const thickness = 0.0;
@@ -93,7 +110,7 @@ export class Card {
     return mesh;
   }
 
-  createHitbox() {
+  private createHitbox(): THREE.Mesh {
     const width = 1;
     const height = 2;
     const geometry = new THREE.PlaneGeometry(width, height);
@@ -105,7 +122,7 @@ export class Card {
     return new THREE.Mesh(geometry, material);
   }
 
-  startFloatingAnimation() {
+  public startFloatingAnimation(): void {
     if (this.floatingAnimation) {
       this.floatingAnimation.kill();
     }
@@ -120,7 +137,7 @@ export class Card {
     }
   }
 
-  spreadFrom(center, direction, amount) {
+  public spreadFrom(center: number, direction: number, amount: number): void {
     if (this.isHovered) return;
     
     const targetX = this.basePosition.x + (direction * amount);
@@ -136,7 +153,7 @@ export class Card {
     });
   }
 
-  resetPosition() {
+  public resetPosition(): void {
     if (!this.isHovered) {
       if (this.currentTween) {
         this.currentTween.kill();
@@ -159,7 +176,7 @@ export class Card {
     }
   }
 
-  hover() {
+  public hover(): void {
     this.isHovered = true;
     console.log('hovered card: ', this);
     
@@ -188,7 +205,7 @@ export class Card {
     this.currentTween = tl;
   }
 
-  unhover() {
+  public unhover(): void {
     this.isHovered = false;
     
     if (this.currentTween) {
@@ -223,7 +240,7 @@ export class Card {
     this.currentTween = tl;
   }
 
-  remove() {
+  public remove(): void {
     this.scene.remove(this.mesh);
     this.scene.remove(this.hitbox);
     this.mesh.geometry.dispose();

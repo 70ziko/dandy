@@ -1,9 +1,29 @@
-// Hand.js
 import * as THREE from 'three';
 import { Card } from './Card';
 
+interface HandConstructorParams {
+  scene: THREE.Scene;
+  numCards?: number;
+  tablePosition?: THREE.Vector3;
+}
+
+interface FanProperties {
+  fanRadius: number;
+  fanSpread: number;
+  zOffset: number;
+}
+
 export class Hand {
-  constructor(scene, numCards = 5, tablePosition = new THREE.Vector3(0, -6, 5)) {
+  private scene: THREE.Scene;
+  private numCards: number;
+  private tablePosition: THREE.Vector3;
+  private cards: Card[];
+
+  constructor({ 
+    scene, 
+    numCards = 5, 
+    tablePosition = new THREE.Vector3(0, -6, 5) 
+  }: HandConstructorParams) {
     this.scene = scene;
     this.numCards = numCards;
     this.tablePosition = tablePosition;
@@ -11,7 +31,7 @@ export class Hand {
     this.spawnCards();
   }
 
-  calculateFanProperties(numCards) {
+  private calculateFanProperties(numCards: number): FanProperties {
     const fanRadius = 1.5 + ((numCards + 1) * 0.1);
     const maxSpread = Math.PI * 2 / 3; // 120 degrees
     const minSpread = Math.PI / 6; // 30 degrees
@@ -20,7 +40,7 @@ export class Hand {
     return { fanRadius, fanSpread, zOffset };
   }
 
-  spawnCards() {
+  private spawnCards(): void {
     const { fanRadius, fanSpread, zOffset } = this.calculateFanProperties(this.numCards);
     const centerAngle = Math.PI / 2;
 
@@ -33,12 +53,12 @@ export class Hand {
       const position = new THREE.Vector3(xPos, yPos, zPos);
       const rotation = new THREE.Euler(-Math.PI * 0.2, 0, angle + Math.PI / 2);
 
-      const card = new Card(this.scene, position, rotation);
+      const card = new Card({ scene: this.scene, position, rotation });
       this.cards.push(card);
     }
   }
 
-  remove() {
+  public remove(): void {
     this.cards.forEach((card) => card.remove());
     this.cards = [];
   }

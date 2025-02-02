@@ -58,7 +58,7 @@ export class DivergencePass {
           }`,
       depthTest: false,
       depthWrite: false,
-      extensions: { derivatives: true }
+      // extensions: { derivatives: true }
     });
     this.mesh = new Mesh(geometry, this.material);
     this.mesh.frustumCulled = false; // Just here to silence a console error.
