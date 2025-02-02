@@ -6,13 +6,14 @@ import {
   Scene,
   Texture,
   Uniform,
+  Vector2
 } from "three";
 
 export class BoundaryPass {
-  scene;
+  public readonly scene: Scene;
 
-  material;
-  mesh;
+  private material: RawShaderMaterial;
+  private mesh: Mesh;
 
   constructor() {
     this.scene = new Scene();
@@ -57,13 +58,14 @@ export class BoundaryPass {
         }`,
       depthTest: false,
       depthWrite: false,
+      extensions: { derivatives: true }
     });
     this.mesh = new Mesh(geometry, this.material);
     this.mesh.frustumCulled = false; // Just here to silence a console error.
     this.scene.add(this.mesh);
   }
 
-  update(uniforms) {
+  public update(uniforms: any): void {
     if (uniforms.position !== undefined) {
       this.material.uniforms.position.value = uniforms.position;
     }

@@ -13,7 +13,12 @@ import {
 const MAX_TOUCHES = 10;
 
 export class TouchColorPass {
-  constructor(resolution, radius) {
+  public readonly scene: Scene;
+
+  private material: RawShaderMaterial;
+  private mesh: Mesh;
+
+  constructor(readonly resolution: Vector2, readonly radius: number) {
     this.scene = new Scene();
 
     const geometry = new BufferGeometry();
@@ -99,7 +104,7 @@ export class TouchColorPass {
     this.scene.add(this.mesh);
   }
 
-  update(uniforms) {
+  public update(uniforms: any): void {
     if (uniforms.aspect !== undefined) {
       this.material.uniforms.aspect.value = uniforms.aspect;
     }

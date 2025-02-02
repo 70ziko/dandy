@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "@tweenjs/tween.js": "^25.0.0",
+    "@types/three": "^0.173.0",
     "cra-template": "1.2.0",
     "gasp": "^0.0.2",
     "gsap": "^3.12.7",
@@ -37,5 +38,9 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.8",
+    "@types/react-dom": "^19.0.3"
   }
 }

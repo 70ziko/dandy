@@ -23,9 +23,9 @@ import { VelocityInitPass } from "./passes/VelocityInitPass";
 import { RenderTarget } from "./RenderTarget";
 
 // Gradients setup
-const gradients = ["gradient.jpg"];
-const gradientTextures = [];
-function loadGradients(textureLoader) {
+const gradients: string[] = ["gradient.jpg"];
+const gradientTextures: any[] = [];
+function loadGradients(textureLoader: TextureLoader) {
   for (let i = 0; i < gradients.length; ++i) {
     textureLoader.load(gradients[i], (texture) => {
       gradientTextures[i] = texture;
@@ -33,8 +33,8 @@ function loadGradients(textureLoader) {
   }
 }
 
-const FluidBackground = () => {
-  const canvasRef = useRef(null);
+const FluidBackground: React.FC = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -72,7 +72,7 @@ const FluidBackground = () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
     const camera = new OrthographicCamera(0, 0, 0, 0, 0, 0);
-    let dt = 1 / 60;
+    const dt = 1 / 60;
 
     // Set resolution and aspect.
     const resolution = new Vector2(
@@ -88,7 +88,7 @@ const FluidBackground = () => {
     const colorRT = new RenderTarget(resolution, 2, RGBFormat, UnsignedByteType);
 
     // Initialize simulation variables.
-    let v, c, d, p;
+    let v: any, c: any, d: any, p: any;
 
     // Initialize passes.
     const velocityInitPass = new VelocityInitPass(renderer, resolution);
@@ -124,7 +124,7 @@ const FluidBackground = () => {
     loadGradients(textureLoader);
 
     // Setup input event handling.
-    let inputTouches = [];
+    let inputTouches: { id: string | number; input: Vector4 }[] = [];
     const handleResize = () => {
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setPixelRatio(window.devicePixelRatio);
@@ -143,19 +143,19 @@ const FluidBackground = () => {
     window.addEventListener("resize", handleResize);
 
     const canvasRect = canvas.getBoundingClientRect();
-    const getRelativeCoords = (clientX, clientY) => {
+    const getRelativeCoords = (clientX: number, clientY: number) => {
       const x = (clientX / canvas.clientWidth) * aspect.x;
       const y = 1.0 - (clientY / canvas.clientHeight);
       return { x, y };
     };
 
-    const onMouseDown = (event) => {
+    const onMouseDown = (event: MouseEvent) => {
       if (event.button === 0) {
         const { x, y } = getRelativeCoords(event.clientX, event.clientY);
         inputTouches.push({ id: "mouse", input: new Vector4(x, y, 0, 0) });
       }
     };
-    const onMouseMove = (event) => {
+    const onMouseMove = (event: MouseEvent) => {
       if (inputTouches.length > 0) {
         const { x, y } = getRelativeCoords(event.clientX, event.clientY);
         const touch = inputTouches[0].input;
@@ -163,7 +163,7 @@ const FluidBackground = () => {
         touch.setX(x).setY(y);
       }
     };
-    const onMouseUp = (event) => {
+    const onMouseUp = (event: MouseEvent) => {
       if (event.button === 0) {
         inputTouches.pop();
       }
@@ -173,8 +173,8 @@ const FluidBackground = () => {
     canvas.addEventListener("mousemove", onMouseMove);
     canvas.addEventListener("mouseup", onMouseUp);
 
-    const onTouchStart = (event) => {
-      for (const touchEvent of event.changedTouches) {
+    const onTouchStart = (event: TouchEvent) => {
+      for (const touchEvent of Array.from(event.changedTouches)) {
         const { x, y } = getRelativeCoords(touchEvent.clientX, touchEvent.clientY);
         inputTouches.push({
           id: touchEvent.identifier,
@@ -182,9 +182,9 @@ const FluidBackground = () => {
         });
       }
     };
-    const onTouchMove = (event) => {
+    const onTouchMove = (event: TouchEvent) => {
       event.preventDefault();
-      for (const touchEvent of event.changedTouches) {
+      for (const touchEvent of Array.from(event.changedTouches)) {
         const reg = inputTouches.find(t => t.id === touchEvent.identifier);
         if (reg) {
           const { x, y } = getRelativeCoords(touchEvent.clientX, touchEvent.clientY);
@@ -193,8 +193,8 @@ const FluidBackground = () => {
         }
       }
     };
-    const onTouchEnd = (event) => {
-      for (const touchEvent of event.changedTouches) {
+    const onTouchEnd = (event: TouchEvent) => {
+      for (const touchEvent of Array.from(event.changedTouches)) {
         inputTouches = inputTouches.filter(t => t.id !== touchEvent.identifier);
       }
     };
@@ -286,7 +286,7 @@ const FluidBackground = () => {
   
       // Final composition.
       renderer.setRenderTarget(null);
-      let visualization;
+      let visualization: any;
       switch (configuration.Visualize) {
         case "Color":
           visualization = c;
@@ -312,7 +312,7 @@ const FluidBackground = () => {
       renderer.render(compositionPass.scene, camera);
     }
   
-    let animationId;
+    let animationId: number;
     function animate() {
       render();
       animationId = requestAnimationFrame(animate);

@@ -2,8 +2,8 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, useParams } from 'react-router-dom';
 import FluidBackground from "./components/fluidBackground/FluidBackground";
 
-function ScenePage() {
-  const { tableId } = useParams();
+const ScenePage: React.FC = () => {
+  const { tableId } = useParams<{ tableId?: string }>();
   return (
     <div style={{ position: "relative", width: "100vw", height: "100vh" }}>
       <FluidBackground />
@@ -18,9 +18,9 @@ function ScenePage() {
       )}
     </div>
   );
-}
+};
 
-function App() {
+const App: React.FC = () => {
   return (
     <BrowserRouter>
       <Routes>
@@ -29,6 +29,6 @@ function App() {
       </Routes>
     </BrowserRouter>
   );
-}
+};
 
 export default App;

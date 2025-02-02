@@ -4,19 +4,20 @@ import {
   Mesh,
   RawShaderMaterial,
   Scene,
+  Texture,
   Uniform
 } from "three";
 
 export class AdvectionPass {
-  scene;
+  public readonly scene: Scene;
 
-  material;
-  mesh;
+  private material: RawShaderMaterial;
+  private mesh: Mesh;
 
   constructor(
-    initialVelocity,
-    initialValue,
-    decay
+    readonly initialVelocity: Texture,
+    readonly initialValue: Texture,
+    readonly decay: number
   ) {
     this.scene = new Scene();
 
@@ -65,7 +66,7 @@ export class AdvectionPass {
     this.scene.add(this.mesh);
   }
 
-  update(uniforms) {
+  public update(uniforms: any): void {
     if (uniforms.timeDelta !== undefined) {
       this.material.uniforms.timeDelta.value = uniforms.timeDelta;
     }

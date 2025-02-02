@@ -1,14 +1,19 @@
-import { WebGLRenderTarget } from "three";
+import { Texture, Vector2, WebGLRenderer, WebGLRenderTarget } from "three";
+
+interface IBuffer {
+  target: WebGLRenderTarget;
+  needsResize: boolean;
+}
 
 export class RenderTarget {
-  index;
-  buffers;
+  private index: number;
+  private buffers: IBuffer[];
 
   constructor(
-    resolution,
-    nBuffers,
-    format,
-    type
+    readonly resolution: Vector2,
+    readonly nBuffers: number,
+    readonly format: number,
+    readonly type: number
   ) {
     this.index = 0;
     this.buffers = [
@@ -30,14 +35,14 @@ export class RenderTarget {
     }
   }
 
-  resize(resolution) {
+  public resize(resolution: Vector2): void {
     resolution.copy(resolution);
     for (let i = 0; i < this.nBuffers; ++i) {
       this.buffers[i].needsResize = true;
     }
   }
 
-  set(renderer) {
+  public set(renderer: WebGLRenderer): Texture {
     const buffer = this.buffers[this.index++];
     if (buffer.needsResize) {
       buffer.needsResize = false;
