@@ -1,4 +1,4 @@
-import { Texture, Vector2, WebGLRenderer, WebGLRenderTarget } from "three";
+import { Texture, Vector2, WebGLRenderer, WebGLRenderTarget, TextureDataType } from "three";
 
 interface IBuffer {
   target: WebGLRenderTarget;
@@ -20,7 +20,7 @@ export class RenderTarget {
       {
         target: new WebGLRenderTarget(resolution.x, resolution.y, {
           format,
-          type,
+          type: type as TextureDataType,
           depthBuffer: false,
           stencilBuffer: false
         }),

@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, useParams } from 'react-router-dom';
-import FluidBackground from "./components/fluidBackground/FluidBackground";
+import FluidBackground from "components/fluidBackground/FluidBackground";
 
 const ScenePage: React.FC = () => {
   const { tableId } = useParams<{ tableId?: string }>();
