@@ -26,6 +26,14 @@ const gameStates: GameStates = {};
 
 let guestCounter = 0;
 
+app.use(function(req: Request, res: Response, next: NextFunction) {
+  res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Guest-Id, X-Requested-With, Content-Type, Accept');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  next();
+});
+
 app.use((req: Request, res: Response, next: NextFunction) => {
   if (!req.headers['x-guest-id']) {
     const guestId = `guest_${++guestCounter}`;
@@ -33,8 +41,6 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   }
   next();
 });
-
-app.use(express.static(path.join(__dirname, '../../client/build')));
 
 function generateRandomCards(count: number): string[] {
   const cards: string[] = [];
@@ -120,13 +126,6 @@ app.post<ActionParams, any, ActionBody>('/:tableId/action', express.json(), ((re
   res.json({ status: 'not implemented' });
 }) as RequestHandler<ActionParams>);
 
-app.get('/', ((req: Request, res: Response) => {
-  if (!req.cookies.guestId) {
-    const guestId = `guest_${crypto.randomBytes(8).toString('hex')}`;
-    res.cookie('guestId', guestId, { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 }); // 1 day
-  }
-  res.sendFile(path.join(__dirname, '../../client/build', 'index.html'));
-}) as RequestHandler);
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
