@@ -6,7 +6,6 @@ import {
   Scene,
   Texture,
   Uniform,
-  Vector2
 } from "three";
 
 export class BoundaryPass {

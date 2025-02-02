@@ -142,7 +142,6 @@ const FluidBackground: React.FC = () => {
     };
     window.addEventListener("resize", handleResize);
 
-    const canvasRect = canvas.getBoundingClientRect();
     const getRelativeCoords = (clientX: number, clientY: number) => {
       const x = (clientX / canvas.clientWidth) * aspect.x;
       const y = 1.0 - (clientY / canvas.clientHeight);
