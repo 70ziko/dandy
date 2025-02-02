@@ -3,22 +3,57 @@ import * as THREE from 'three';
 import gsap from 'gsap';
 import { Hand } from './components/Hand';
 
-const CardGame = ({ numCards = 5 }) => {
-  const mountRef = useRef(null);
-  const sceneRef = useRef(null);
-  const handRef = useRef(null);
-  const animationFrameRef = useRef();
+interface SceneRefs {
+  scene: THREE.Scene;
+  camera: THREE.PerspectiveCamera;
+  renderer: THREE.WebGLRenderer;
+}
+
+interface Props {
+  numCards?: number;
+}
+
+interface Card {
+  hitbox: THREE.Object3D;
+  isHovered: boolean;
+  hover: () => void;
+  unhover: () => void;
+  resetPosition: () => void;
+}
+
+const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
+  const mountRef = useRef<HTMLDivElement>(null);
+  const sceneRef = useRef<SceneRefs | null>(null);
+  const handRef = useRef<Hand | null>(null);
+  const animationFrameRef = useRef<number | void>(null);
 
   useEffect(() => {
     const mountElement = mountRef.current;
+    if (!mountElement) return;
 
     const cleanupScene = () => {
       if (sceneRef.current) {
+        const { scene, renderer } = sceneRef.current;
+        
+        // Clean up hand
         if (handRef.current) {
           handRef.current.remove();
           handRef.current = null;
         }
-        const { renderer } = sceneRef.current;
+
+        // Dispose of scene objects
+        scene.traverse((object: THREE.Object3D) => {
+          if (object instanceof THREE.Mesh) {
+            object.geometry.dispose();
+            if (object.material instanceof THREE.Material) {
+              object.material.dispose();
+            } else if (Array.isArray(object.material)) {
+              object.material.forEach(material => material.dispose());
+            }
+          }
+        });
+
+        // Clean up renderer
         if (renderer.domElement && renderer.domElement.parentNode) {
           renderer.domElement.parentNode.removeChild(renderer.domElement);
         }
@@ -29,7 +64,7 @@ const CardGame = ({ numCards = 5 }) => {
 
     cleanupScene();
 
-    const setup = () => {
+    const setup = (): void => {
       const scene = new THREE.Scene();
       const camera = new THREE.PerspectiveCamera(
         75,
@@ -41,9 +76,7 @@ const CardGame = ({ numCards = 5 }) => {
 
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setClearColor(0x1a1a1a);
-      if (mountElement) {
-        mountElement.appendChild(renderer.domElement);
-      }
+      mountElement.appendChild(renderer.domElement);
 
       const tableGeometry = new THREE.PlaneGeometry(20, 20);
       const tableMaterial = new THREE.MeshStandardMaterial({
@@ -66,6 +99,7 @@ const CardGame = ({ numCards = 5 }) => {
     };
 
     const handleResize = () => {
+      if (!sceneRef.current) return;
       const { camera, renderer } = sceneRef.current;
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
@@ -75,19 +109,29 @@ const CardGame = ({ numCards = 5 }) => {
     const setupRaycaster = () => {
       const raycaster = new THREE.Raycaster();
       const mouse = new THREE.Vector2();
+      let lastRaycastTime = 0;
 
-      const onMouseMove = (event) => {
-        if (!handRef.current) return;
+      const onMouseMove = (event: MouseEvent) => {
+        if (!handRef.current || !sceneRef.current) return;
+        
+        // Throttle raycaster calculations
+        if (event.timeStamp - lastRaycastTime < 16) return; // ~60fps
+        lastRaycastTime = event.timeStamp;
+
         mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
         mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
         raycaster.setFromCamera(mouse, sceneRef.current.camera);
 
-        handRef.current.cards.forEach((card) => {
-          const intersects = raycaster.intersectObject(card.hitbox);
-          if (intersects.length > 0 && !card.isHovered) {
+        // Get all hitboxes at once for better performance
+        const hitboxes = (handRef.current as any).cards.map((card: Card) => card.hitbox);
+        const intersects = raycaster.intersectObjects(hitboxes, false);
+
+        (handRef.current as any).cards.forEach((card: Card) => {
+          const isIntersected = intersects.some(intersect => intersect.object === card.hitbox);
+          if (isIntersected && !card.isHovered) {
             card.hover();
-          } else if (intersects.length === 0 && card.isHovered) {
+          } else if (!isIntersected && card.isHovered) {
             card.unhover();
             card.resetPosition();
           }
@@ -100,7 +144,12 @@ const CardGame = ({ numCards = 5 }) => {
 
     setup();
 
-    handRef.current = new Hand(sceneRef.current.scene, numCards, new THREE.Vector3(0, -6, 5));
+    if (!sceneRef.current) return;
+    handRef.current = new Hand({
+      scene: sceneRef.current.scene,
+      numCards,
+      tablePosition: new THREE.Vector3(0, -6, 5)
+    });
 
     const cleanupRaycaster = setupRaycaster();
     window.addEventListener('resize', handleResize);
