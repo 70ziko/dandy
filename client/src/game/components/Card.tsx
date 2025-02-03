@@ -8,16 +8,16 @@ interface CardConstructorParams {
 }
 
 export class Card {
-  private scene: THREE.Scene;
-  private mesh: THREE.Mesh;
-  private hitbox: THREE.Mesh;
-  private basePosition: THREE.Vector3;
-  private baseRotation: THREE.Euler;
-  private isHovered: boolean;
-  private currentTween: gsap.core.Timeline | gsap.core.Tween | null;
-  private floatingAnimation: gsap.core.Tween | null;
-  private originalPosition: THREE.Vector3;
-  private originalRotation: THREE.Euler;
+  protected scene: THREE.Scene;
+  protected mesh: THREE.Mesh;
+  protected hitbox: THREE.Mesh;
+  protected basePosition: THREE.Vector3;
+  protected baseRotation: THREE.Euler;
+  protected isHovered: boolean;
+  protected currentTween: gsap.core.Timeline | gsap.core.Tween | null;
+  protected floatingAnimation: gsap.core.Tween | null;
+  protected originalPosition: THREE.Vector3;
+  protected originalRotation: THREE.Euler;
 
   constructor({ scene, position = new THREE.Vector3(), rotation = new THREE.Euler() }: CardConstructorParams) {
     this.scene = scene;
@@ -44,14 +44,14 @@ export class Card {
     this.originalRotation = rotation.clone();
   }
 
-  private createMesh(): THREE.Mesh {
+  protected createMesh(): THREE.Mesh {
     const width = 1;
     const height = 1.618;
     const thickness = 0.0;
     const radius = 0.05;
 
     const shape = new THREE.Shape();
-    const x = -width/2, y = -height/2;
+    const x = -width / 2, y = -height / 2;
     
     shape.moveTo(x + radius, y);
     shape.lineTo(x + width - radius, y);
@@ -110,7 +110,7 @@ export class Card {
     return mesh;
   }
 
-  private createHitbox(): THREE.Mesh {
+  protected createHitbox(): THREE.Mesh {
     const width = 1;
     const height = 2;
     const geometry = new THREE.PlaneGeometry(width, height);
@@ -249,6 +249,49 @@ export class Card {
       this.mesh.material.forEach(material => material.dispose());
     } else {
       this.mesh.material.dispose();
+    }
+  }
+}
+
+// New GuiCard that extends Card for GUI usage
+interface GuiCardConstructorParams extends CardConstructorParams {
+  frontTexture?: string;
+  alt: string;
+  onClick?: () => void;
+}
+
+export class GuiCard extends Card {
+  private frontTextureUrl?: string;
+  public alt: string;
+  public onClick?: () => void;
+
+  constructor(params: GuiCardConstructorParams) {
+    super(params);
+    this.frontTextureUrl = params.frontTexture;
+    this.alt = params.alt;
+    this.onClick = params.onClick;
+
+    // Replace mesh material with custom front texture if provided.
+    const loader = new THREE.TextureLoader();
+    const texture = this.frontTextureUrl
+      ? loader.load(this.frontTextureUrl)
+      : loader.load('/assets/black-reverse.jpg');
+    const frontMaterial = new THREE.MeshPhongMaterial({
+      map: texture,
+      side: THREE.FrontSide,
+      shininess: 0,
+      depthTest: false,
+      polygonOffset: true,
+      polygonOffsetFactor: 1,
+      polygonOffsetUnits: 1
+    });
+    // Assuming material index 0 is the front
+    if (Array.isArray((this.mesh).material)) {
+      (this.mesh).material[0] = frontMaterial;
+    }
+    // Attach onClick to the hitbox for interaction (to be handled by a raycaster elsewhere)
+    if (this.onClick) {
+      this.hitbox.userData.onClick = this.onClick;
     }
   }
 }
