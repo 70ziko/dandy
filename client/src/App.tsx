@@ -12,13 +12,13 @@ const ScenePage: React.FC = () => {
   useEffect(() => {
     if (!canvasRef.current) return;
 
+    // Set up renderer, scene, and camera.
     const renderer = new THREE.WebGLRenderer({
       canvas: canvasRef.current,
       alpha: true,
       antialias: true,
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
-
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
       75,
@@ -28,7 +28,7 @@ const ScenePage: React.FC = () => {
     );
     camera.position.z = 5;
 
-    // Create a GuiCard instance with alt "PLAY" and onClick redirect to /game
+    // Create a GuiCard instance with alt "PLAY" and onClick redirect to /game.
     new GuiCard({
       scene,
       alt: 'PLAY',
@@ -40,20 +40,52 @@ const ScenePage: React.FC = () => {
       rotation: new THREE.Euler(0, 0, 0),
     });
 
+    // Set up raycaster for detecting mouse interactions.
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    // Handler for click events.
+    const onClick = (event: MouseEvent) => {
+      const rect = renderer.domElement.getBoundingClientRect();
+      mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+
+      // Intersect objects recursively.
+      const intersects = raycaster.intersectObjects(scene.children, true);
+      if (intersects.length > 0) {
+        for (const intersect of intersects) {
+          if (intersect.object.userData?.onClick) {
+            intersect.object.userData.onClick();
+            break;
+          }
+        }
+      }
+    };
+
+    // Add the click event listener to the renderer's DOM element.
+    renderer.domElement.addEventListener('click', onClick);
+
+    // Animation loop.
     const animate = () => {
       requestAnimationFrame(animate);
       renderer.render(scene, camera);
     };
     animate();
 
+    // Cleanup on unmount.
     return () => {
+      renderer.domElement.removeEventListener('click', onClick);
       renderer.dispose();
     };
   }, [navigate]);
 
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100vh' }}>
-      <FluidBackground />
+      {/* Wrap FluidBackground in a div that ignores pointer events */}
+      <div style={{ pointerEvents: 'none' }}>
+        <FluidBackground />
+      </div>
       <canvas
         ref={canvasRef}
         style={{

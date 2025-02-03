@@ -121,6 +121,11 @@ export class Card {
     });
     return new THREE.Mesh(geometry, material);
   }
+  
+  // Public getter for the hitbox for interactive event handling
+  public getHitbox(): THREE.Mesh {
+    return this.hitbox;
+  }
 
   public startFloatingAnimation(): void {
     if (this.floatingAnimation) {
