@@ -1,26 +1,11 @@
 import express from 'express';
 import type { Request, Response, NextFunction, RequestHandler } from 'express';
 import crypto from 'crypto';
-import path from 'path';
+import type { GameStates, DrawParams, ActionParams, ActionBody } from './types'
+import { initializeDeck, drawRandomCards } from './core';
 
 const app = express();
 const port = process.env.PORT || 3001;
-
-interface GameState {
-  players: Map<string, string[]>; // guestId -> cards
-  turnCounter: number;
-  currentTurn: string | null;
-  pokerFigures?: string[] | null;
-  lastAction?: {
-    player: string;
-    action: string;
-    value?: any;
-  };
-}
-
-interface GameStates {
-  [tableId: string]: GameState;
-}
 
 const gameStates: GameStates = {};
 
@@ -42,19 +27,6 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
-function generateRandomCards(count: number): string[] {
-  const cards: string[] = [];
-  const deck = Array.from({length: 52}, (_, i) => i.toString());
-  
-  for (let i = 0; i < count; i++) {
-    const randomIndex = Math.floor(Math.random() * deck.length);
-    const card = deck.splice(randomIndex, 1)[0];
-    cards.push(card);
-  }
-  
-  return cards;
-}
-
 function signData(data: any): { data: any, signature: string } {
   const secret = process.env.JWT_SECRET || 'your-secret-key';
   const stringified = JSON.stringify(data);
@@ -69,19 +41,6 @@ function signData(data: any): { data: any, signature: string } {
   };
 }
 
-interface DrawParams {
-  tableId: string;
-}
-
-interface ActionParams {
-  tableId: string;
-}
-
-interface ActionBody {
-  action: string;
-  value?: any;
-}
-
 app.get<DrawParams>('/:tableId/draw', ((req: Request<DrawParams>, res: Response) => {
   const { tableId } = req.params;
   const guestId = req.headers['x-guest-id'] as string;
@@ -89,6 +48,7 @@ app.get<DrawParams>('/:tableId/draw', ((req: Request<DrawParams>, res: Response)
   if (!gameStates[tableId]) {
     gameStates[tableId] = {
       players: new Map(),
+      deck: initializeDeck(),
       currentTurn: null,
       turnCounter: 0
     };
@@ -101,7 +61,7 @@ app.get<DrawParams>('/:tableId/draw', ((req: Request<DrawParams>, res: Response)
     return res.json(signData(existingCards));
   }
   
-  const cards = generateRandomCards(5); // Default to 5 cards per player
+  const cards = drawRandomCards(5, gameState.deck); // Default to 5 cards per player
   gameState.players.set(guestId, cards);
   
   if (!gameState.currentTurn) {
