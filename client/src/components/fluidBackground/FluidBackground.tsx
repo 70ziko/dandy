@@ -148,29 +148,19 @@ const FluidBackground: React.FC = () => {
       return { x, y };
     };
 
-    const onMouseDown = (event: MouseEvent) => {
-      if (event.button === 0) {
-        const { x, y } = getRelativeCoords(event.clientX, event.clientY);
-        inputTouches.push({ id: "mouse", input: new Vector4(x, y, 0, 0) });
-      }
-    };
     const onMouseMove = (event: MouseEvent) => {
-      if (inputTouches.length > 0) {
-        const { x, y } = getRelativeCoords(event.clientX, event.clientY);
+      console.log("onMouseMove");
+      const { x, y } = getRelativeCoords(event.clientX, event.clientY);
+      if (inputTouches.length === 0) {
+        inputTouches.push({ id: "mouse", input: new Vector4(x, y, 0, 0) });
+      } else {
         const touch = inputTouches[0].input;
         touch.setZ(x - touch.x).setW(y - touch.y);
         touch.setX(x).setY(y);
       }
     };
-    const onMouseUp = (event: MouseEvent) => {
-      if (event.button === 0) {
-        inputTouches.pop();
-      }
-    };
 
-    canvas.addEventListener("mousedown", onMouseDown);
     canvas.addEventListener("mousemove", onMouseMove);
-    canvas.addEventListener("mouseup", onMouseUp);
 
     const onTouchStart = (event: TouchEvent) => {
       for (const touchEvent of Array.from(event.changedTouches)) {
@@ -322,9 +312,7 @@ const FluidBackground: React.FC = () => {
     return () => {
       cancelAnimationFrame(animationId);
       window.removeEventListener("resize", handleResize);
-      canvas.removeEventListener("mousedown", onMouseDown);
       canvas.removeEventListener("mousemove", onMouseMove);
-      canvas.removeEventListener("mouseup", onMouseUp);
       canvas.removeEventListener("touchstart", onTouchStart);
       canvas.removeEventListener("touchmove", onTouchMove);
       canvas.removeEventListener("touchend", onTouchEnd);

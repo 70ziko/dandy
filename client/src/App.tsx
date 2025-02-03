@@ -100,13 +100,14 @@ const ScenePage: React.FC = () => {
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100vh' }}>
       {/* Wrap FluidBackground in a div that ignores pointer events */}
-      <div style={{ pointerEvents: 'none' }}>
+      {/* <div style={{ pointerEvents: 'none' }}> */}
         <FluidBackground />
-      </div>
+      {/* </div> */}
       <canvas
         ref={canvasRef}
         style={{
           position: 'absolute',
+          pointerEvents: 'none',
           top: 0,
           left: 0,
           width: '100%',
