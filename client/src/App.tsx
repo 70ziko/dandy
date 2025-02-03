@@ -28,8 +28,12 @@ const ScenePage: React.FC = () => {
     );
     camera.position.z = 5;
 
+    // Set up raycaster and mouse vector.
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
     // Create a GuiCard instance with alt "PLAY" and onClick redirect to /game.
-    new GuiCard({
+    const card = new GuiCard({
       scene,
       alt: 'PLAY',
       frontTexture: '/assets/black-reverse.jpg',
@@ -39,10 +43,6 @@ const ScenePage: React.FC = () => {
       position: new THREE.Vector3(0, 0, 0),
       rotation: new THREE.Euler(0, 0, 0),
     });
-
-    // Set up raycaster for detecting mouse interactions.
-    const raycaster = new THREE.Raycaster();
-    const mouse = new THREE.Vector2();
 
     // Handler for click events.
     const onClick = (event: MouseEvent) => {
@@ -63,8 +63,24 @@ const ScenePage: React.FC = () => {
       }
     };
 
-    // Add the click event listener to the renderer's DOM element.
+    // Handler for mouse move to update hover state.
+    const onMouseMove = (event: MouseEvent) => {
+      const rect = renderer.domElement.getBoundingClientRect();
+      mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(scene.children, true);
+      const isHovering = intersects.some(intersect => intersect.object === card.getHitbox());
+      if (isHovering) {
+        card.hover();
+      } else {
+        card.unhover();
+      }
+    };
+
+    // Add event listeners to the renderer's DOM element.
     renderer.domElement.addEventListener('click', onClick);
+    renderer.domElement.addEventListener('mousemove', onMouseMove);
 
     // Animation loop.
     const animate = () => {
@@ -76,6 +92,7 @@ const ScenePage: React.FC = () => {
     // Cleanup on unmount.
     return () => {
       renderer.domElement.removeEventListener('click', onClick);
+      renderer.domElement.removeEventListener('mousemove', onMouseMove);
       renderer.dispose();
     };
   }, [navigate]);
