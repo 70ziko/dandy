@@ -58,12 +58,26 @@ const ScenePage: React.FC = () => {
       }
     };
 
-    // Handler for mouse move to update hover state.
-    const onMouseMove = (event: MouseEvent) => {
+    let draggedCard: GuiCard | null = null;
+    
+    const updateMousePosition = (event: MouseEvent) => {
       const rect = renderer.domElement.getBoundingClientRect();
       mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
       mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+    };
+
+    const onMouseMove = (event: MouseEvent) => {
+      updateMousePosition(event);
       raycaster.setFromCamera(mouse, camera);
+
+      if (draggedCard) {
+        const dragPosition = new THREE.Vector3();
+        const distance = draggedCard.getMeshPosition().distanceTo(camera.position);
+        raycaster.ray.at(distance, dragPosition);
+        draggedCard.drag(dragPosition);
+        return;
+      }
+
       const intersects = raycaster.intersectObjects(scene.children, true);
       const isHovering = intersects.some(intersect => intersect.object === card.getHitbox());
       if (isHovering) {
@@ -73,8 +87,29 @@ const ScenePage: React.FC = () => {
       }
     };
 
-    renderer.domElement.addEventListener('click', onClick);
+    const onMouseDown = (event: MouseEvent) => {
+      updateMousePosition(event);
+      raycaster.setFromCamera(mouse, camera);
+      
+      const intersects = raycaster.intersectObjects(scene.children, true);
+      const hitboxIntersect = intersects.find(intersect => intersect.object === card.getHitbox());
+      
+      if (hitboxIntersect) {
+        draggedCard = card;
+        card.startDrag(hitboxIntersect.point);
+      }
+    };
+
+    const onMouseUp = () => {
+      if (draggedCard) {
+        draggedCard.endDrag();
+        draggedCard = null;
+      }
+    };
+
+    renderer.domElement.addEventListener('mousedown', onMouseDown);
     renderer.domElement.addEventListener('mousemove', onMouseMove);
+    renderer.domElement.addEventListener('mouseup', onMouseUp);
 
     const animate = () => {
       requestAnimationFrame(animate);
@@ -83,8 +118,9 @@ const ScenePage: React.FC = () => {
     animate();
 
     return () => {
-      renderer.domElement.removeEventListener('click', onClick);
+      renderer.domElement.removeEventListener('mousedown', onMouseDown);
       renderer.domElement.removeEventListener('mousemove', onMouseMove);
+      renderer.domElement.removeEventListener('mouseup', onMouseUp);
       renderer.dispose();
     };
   }, [navigate]);
@@ -96,7 +132,7 @@ const ScenePage: React.FC = () => {
         ref={canvasRef}
         style={{
           position: 'absolute',
-          pointerEvents: 'none',
+          // pointerEvents: 'none',
           top: 0,
           left: 0,
           width: '100%',

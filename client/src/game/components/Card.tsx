@@ -14,6 +14,7 @@ export class Card {
   protected basePosition: THREE.Vector3;
   protected baseRotation: THREE.Euler;
   protected isHovered: boolean;
+  protected isDragging: boolean;
   protected currentTween: gsap.core.Timeline | gsap.core.Tween | null;
   protected floatingAnimation: gsap.core.Tween | null;
   protected originalPosition: THREE.Vector3;
@@ -36,6 +37,7 @@ export class Card {
     this.scene.add(this.hitbox);
     
     this.isHovered = false;
+    this.isDragging = false;
     this.currentTween = null;
     this.floatingAnimation = null;
     this.startFloatingAnimation();
@@ -124,6 +126,10 @@ export class Card {
   
   public getHitbox(): THREE.Mesh {
     return this.hitbox;
+  }
+
+  public getMeshPosition(): THREE.Vector3 {
+    return this.mesh.position;
   }
 
   public startFloatingAnimation(): void {
@@ -242,6 +248,43 @@ export class Card {
     }, "-=0.2");
     
     this.currentTween = tl;
+  }
+
+  public startDrag(mousePos: THREE.Vector3): void {
+    this.isDragging = true;
+    if (this.floatingAnimation) {
+      this.floatingAnimation.kill();
+    }
+    if (this.currentTween) {
+      this.currentTween.kill();
+    }
+    this.currentTween = gsap.to(this.mesh.position, {
+      x: mousePos.x,
+      y: mousePos.y,
+      z: mousePos.z,
+      duration: 0.2,
+      ease: "power2.out"
+    });
+  }
+
+  public drag(mousePos: THREE.Vector3): void {
+    if (!this.isDragging) return;
+    if (this.currentTween) {
+      this.currentTween.kill();
+    }
+    this.currentTween = gsap.to(this.mesh.position, {
+      x: mousePos.x,
+      y: mousePos.y,
+      z: mousePos.z,
+      duration: 0.2,
+      ease: "power2.out"
+    });
+  }
+
+  public endDrag(): void {
+    if (!this.isDragging) return;
+    this.isDragging = false;
+    this.resetPosition();
   }
 
   public remove(): void {

@@ -15,10 +15,14 @@ interface Props {
 
 interface Card {
   hitbox: THREE.Object3D;
+  mesh: THREE.Mesh;
   isHovered: boolean;
   hover: () => void;
   unhover: () => void;
   resetPosition: () => void;
+  startDrag: (position: THREE.Vector3) => void;
+  drag: (position: THREE.Vector3) => void;
+  endDrag: () => void;
 }
 
 const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
@@ -108,20 +112,31 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
       const raycaster = new THREE.Raycaster();
       const mouse = new THREE.Vector2();
       let lastRaycastTime = 0;
+      let draggedCard: Card | null = null;
+      
+      const updateMousePosition = (event: MouseEvent) => {
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+      };
 
       const onMouseMove = (event: MouseEvent) => {
         if (!handRef.current || !sceneRef.current) return;
+        updateMousePosition(event);
         
-        // Throttle raycaster calculations
-        if (event.timeStamp - lastRaycastTime < 16) return; // ~60fps
+        if (draggedCard) {
+          raycaster.setFromCamera(mouse, sceneRef.current.camera);
+          const dragPosition = new THREE.Vector3();
+          // Project ray at the card's current distance from camera
+          const distance = draggedCard.mesh.position.distanceTo(sceneRef.current.camera.position);
+          raycaster.ray.at(distance, dragPosition);
+          draggedCard.drag(dragPosition);
+          return;
+        }
+        
+        if (event.timeStamp - lastRaycastTime < 16) return; // Throttle to ~60fps
         lastRaycastTime = event.timeStamp;
 
-        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
         raycaster.setFromCamera(mouse, sceneRef.current.camera);
-
-        // Get all hitboxes at once for better performance
         const hitboxes = (handRef.current as any).cards.map((card: Card) => card.hitbox);
         const intersects = raycaster.intersectObjects(hitboxes, false);
 
@@ -136,8 +151,41 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
         });
       };
 
+      const onMouseDown = (event: MouseEvent) => {
+        if (!handRef.current || !sceneRef.current) return;
+        updateMousePosition(event);
+        
+        raycaster.setFromCamera(mouse, sceneRef.current.camera);
+        const hitboxes = (handRef.current as any).cards.map((card: Card) => card.hitbox);
+        const intersects = raycaster.intersectObjects(hitboxes, false);
+
+        if (intersects.length > 0) {
+          const intersected = intersects[0];
+          const cards = (handRef.current as any).cards;
+          const card = cards.find((c: Card) => c.hitbox === intersected.object);
+          if (card) {
+            draggedCard = card;
+            card.startDrag(intersected.point);
+          }
+        }
+      };
+
+      const onMouseUp = () => {
+        if (draggedCard) {
+          draggedCard.endDrag();
+          draggedCard = null;
+        }
+      };
+
       window.addEventListener('mousemove', onMouseMove);
-      return () => window.removeEventListener('mousemove', onMouseMove);
+      window.addEventListener('mousedown', onMouseDown);
+      window.addEventListener('mouseup', onMouseUp);
+
+      return () => {
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('mousedown', onMouseDown);
+        window.removeEventListener('mouseup', onMouseUp);
+      };
     };
 
     setup();
