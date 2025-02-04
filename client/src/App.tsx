@@ -12,7 +12,6 @@ const ScenePage: React.FC = () => {
   useEffect(() => {
     if (!canvasRef.current) return;
 
-    // Set up renderer, scene, and camera.
     const renderer = new THREE.WebGLRenderer({
       canvas: canvasRef.current,
       alpha: true,
@@ -28,11 +27,9 @@ const ScenePage: React.FC = () => {
     );
     camera.position.z = 5;
 
-    // Set up raycaster and mouse vector.
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
 
-    // Create a GuiCard instance with alt "PLAY" and onClick redirect to /game.
     const card = new GuiCard({
       scene,
       alt: 'PLAY',
@@ -44,14 +41,12 @@ const ScenePage: React.FC = () => {
       rotation: new THREE.Euler(0, 0, 0),
     });
 
-    // Handler for click events.
     const onClick = (event: MouseEvent) => {
       const rect = renderer.domElement.getBoundingClientRect();
       mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
       mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
       raycaster.setFromCamera(mouse, camera);
 
-      // Intersect objects recursively.
       const intersects = raycaster.intersectObjects(scene.children, true);
       if (intersects.length > 0) {
         for (const intersect of intersects) {
@@ -78,18 +73,15 @@ const ScenePage: React.FC = () => {
       }
     };
 
-    // Add event listeners to the renderer's DOM element.
     renderer.domElement.addEventListener('click', onClick);
     renderer.domElement.addEventListener('mousemove', onMouseMove);
 
-    // Animation loop.
     const animate = () => {
       requestAnimationFrame(animate);
       renderer.render(scene, camera);
     };
     animate();
 
-    // Cleanup on unmount.
     return () => {
       renderer.domElement.removeEventListener('click', onClick);
       renderer.domElement.removeEventListener('mousemove', onMouseMove);
@@ -99,10 +91,7 @@ const ScenePage: React.FC = () => {
 
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100vh' }}>
-      {/* Wrap FluidBackground in a div that ignores pointer events */}
-      {/* <div style={{ pointerEvents: 'none' }}> */}
-        <FluidBackground />
-      {/* </div> */}
+      <FluidBackground />
       <canvas
         ref={canvasRef}
         style={{

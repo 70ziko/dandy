@@ -122,7 +122,6 @@ export class Card {
     return new THREE.Mesh(geometry, material);
   }
   
-  // Public getter for the hitbox for interactive event handling
   public getHitbox(): THREE.Mesh {
     return this.hitbox;
   }
@@ -258,7 +257,6 @@ export class Card {
   }
 }
 
-// New GuiCard that extends Card for GUI usage
 interface GuiCardConstructorParams extends CardConstructorParams {
   frontTexture?: string;
   alt: string;
@@ -276,7 +274,6 @@ export class GuiCard extends Card {
     this.alt = params.alt;
     this.onClick = params.onClick;
 
-    // Replace mesh material with custom front texture if provided.
     const loader = new THREE.TextureLoader();
     const texture = this.frontTextureUrl
       ? loader.load(this.frontTextureUrl)
@@ -290,11 +287,11 @@ export class GuiCard extends Card {
       polygonOffsetFactor: 1,
       polygonOffsetUnits: 1
     });
-    // Assuming material index 0 is the front
+
     if (Array.isArray((this.mesh).material)) {
       (this.mesh).material[0] = frontMaterial;
     }
-    // Attach onClick to the hitbox for interaction (to be handled by a raycaster elsewhere)
+
     if (this.onClick) {
       this.hitbox.userData.onClick = this.onClick;
     }

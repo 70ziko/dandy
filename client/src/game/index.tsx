@@ -35,13 +35,11 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
       if (sceneRef.current) {
         const { scene, renderer } = sceneRef.current;
         
-        // Clean up hand
         if (handRef.current) {
           handRef.current.remove();
           handRef.current = null;
         }
 
-        // Dispose of scene objects
         scene.traverse((object: THREE.Object3D) => {
           if (object instanceof THREE.Mesh) {
             object.geometry.dispose();
