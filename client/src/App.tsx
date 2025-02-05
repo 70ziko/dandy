@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import * as THREE from 'three';
-import FluidBackground from 'components/fluidBackground/FluidBackground';
+import FluidBackground from 'components/fluidBackground';
 import CardGame from 'game';
 import { GuiCard } from 'game/components/Card';
 
@@ -40,23 +40,6 @@ const ScenePage: React.FC = () => {
       position: new THREE.Vector3(0, 0, 0),
       rotation: new THREE.Euler(0, 0, 0),
     });
-
-    const onClick = (event: MouseEvent) => {
-      const rect = renderer.domElement.getBoundingClientRect();
-      mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-      mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-      raycaster.setFromCamera(mouse, camera);
-
-      const intersects = raycaster.intersectObjects(scene.children, true);
-      if (intersects.length > 0) {
-        for (const intersect of intersects) {
-          if (intersect.object.userData?.onClick) {
-            intersect.object.userData.onClick();
-            break;
-          }
-        }
-      }
-    };
 
     let draggedCard: GuiCard | null = null;
     
@@ -129,15 +112,15 @@ const ScenePage: React.FC = () => {
     <div style={{ position: 'relative', width: '100vw', height: '100vh' }}>
       <FluidBackground />
       <canvas
-        ref={canvasRef}
-        style={{
-          position: 'absolute',
-          // pointerEvents: 'none',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%'
-        }}
+      ref={canvasRef}
+      style={{
+        position: 'absolute',
+        pointerEvents: 'auto',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%'
+      }}
       />
     </div>
   );
