@@ -319,8 +319,8 @@ export class GuiCard extends Card {
 
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
-    canvas.width = 512;
-    canvas.height = 512;
+    canvas.width = 128;
+    canvas.height = 128;
     
     if (context) {
       context.fillStyle = '#000000';
@@ -338,6 +338,10 @@ export class GuiCard extends Card {
     const texture = this.frontTextureUrl
       ? loader.load(this.frontTextureUrl)
       : defaultTexture;
+
+    texture.center.set(0, 0)
+    // texture.repeat.set(1, 1)
+    // texture.offset.set(0, 0)
 
     const frontMaterial = new THREE.MeshPhongMaterial({
       map: texture,

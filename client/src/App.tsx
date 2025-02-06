@@ -42,6 +42,9 @@ const ScenePage: React.FC = () => {
     });
 
     let draggedCard: GuiCard | null = null;
+
+    const light = new THREE.AmbientLight(0xFFFFFF, 1)
+    scene.add(light)
     
     const updateMousePosition = (event: MouseEvent) => {
       const rect = renderer.domElement.getBoundingClientRect();

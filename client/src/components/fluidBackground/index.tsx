@@ -22,7 +22,6 @@ import { TouchForcePass } from "./passes/TouchForcePass";
 import { VelocityInitPass } from "./passes/VelocityInitPass";
 import { RenderTarget } from "./RenderTarget";
 
-// Gradients setup
 const gradients: string[] = ["gradient.jpg"];
 const gradientTextures: any[] = [];
 function loadGradients(textureLoader: TextureLoader) {
@@ -40,7 +39,6 @@ const FluidBackground: React.FC = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // Remove dat.gui and Stats; keep configuration defaults.
     const configuration = {
       Simulate: true,
       Iterations: 32,
@@ -66,7 +64,6 @@ const FluidBackground: React.FC = () => {
       }
     };
 
-    // Create renderer and camera.
     const renderer = new WebGLRenderer({ canvas });
     renderer.autoClear = false;
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -74,23 +71,19 @@ const FluidBackground: React.FC = () => {
     const camera = new OrthographicCamera(0, 0, 0, 0, 0, 0);
     const dt = 1 / 60;
 
-    // Set resolution and aspect.
     const resolution = new Vector2(
       configuration.Scale * window.innerWidth,
       configuration.Scale * window.innerHeight
     );
     const aspect = new Vector2(resolution.x / resolution.y, 1.0);
 
-    // Initialize RenderTargets.
     const velocityRT = new RenderTarget(resolution, 2, RGBAFormat, HalfFloatType);
     const divergenceRT = new RenderTarget(resolution, 1, RGBAFormat, HalfFloatType);
     const pressureRT = new RenderTarget(resolution, 2, RGBAFormat, HalfFloatType);
     const colorRT = new RenderTarget(resolution, 2, RGBFormat, UnsignedByteType);
 
-    // Initialize simulation variables.
     let v: any, c: any, d: any, p: any;
 
-    // Initialize passes.
     const velocityInitPass = new VelocityInitPass(renderer, resolution);
     const velocityInitTexture = velocityInitPass.render();
     const colorInitPass = new ColorInitPass(renderer, resolution);
@@ -119,11 +112,9 @@ const FluidBackground: React.FC = () => {
     const pressureSubstractionPass = new GradientSubstractionPass();
     const compositionPass = new CompositionPass();
 
-    // Load gradients.
     const textureLoader = new TextureLoader().setPath("./resources/");
     loadGradients(textureLoader);
 
-    // Setup input event handling.
     let inputTouches: { id: string | number; input: Vector4 }[] = [];
     const handleResize = () => {
       renderer.setSize(window.innerWidth, window.innerHeight);
