@@ -264,7 +264,6 @@ const FluidBackground: React.FC = () => {
         });
       }
   
-      // Final composition.
       renderer.setRenderTarget(null);
       let visualization: any;
       switch (configuration.Visualize) {
@@ -299,7 +298,6 @@ const FluidBackground: React.FC = () => {
     }
     animate();
   
-    // Cleanup on unmount.
     return () => {
       cancelAnimationFrame(animationId);
       window.removeEventListener("resize", handleResize);

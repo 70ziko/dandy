@@ -30,16 +30,26 @@ const ScenePage: React.FC = () => {
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
 
-    const card = new GuiCard({
-      scene,
-      alt: 'PLAY',
-      // frontTexture: '/assets/black-reverse.jpg',
-      onClick: () => {
-        navigate('/game');
-      },
-      position: new THREE.Vector3(0, 0, 0),
-      rotation: new THREE.Euler(0, 0, 0),
-    });
+    const menuCards: GuiCard[] = [
+      new GuiCard({
+        scene,
+        alt: 'PLAY',
+        // frontTexture: '/assets/black-reverse.jpg',
+        onClick: () => {
+          navigate('/game');
+        },
+        position: new THREE.Vector3(-1, 0, 0),
+        rotation: new THREE.Euler(0, 0, 0),
+      }),
+      new GuiCard({
+        scene, 
+        alt: "Private Rooms",
+        onClick: () => {},
+        position: new THREE.Vector3(1, 0, 0),
+        rotation: new THREE.Euler(0, 0, 0)
+      })
+      
+    ];
 
     let draggedCard: GuiCard | null = null;
 
@@ -65,24 +75,28 @@ const ScenePage: React.FC = () => {
       }
 
       const intersects = raycaster.intersectObjects(scene.children, true);
-      const isHovering = intersects.some(intersect => intersect.object === card.getHitbox());
-      if (isHovering) {
-        card.hover();
-      } else {
-        card.unhover();
+      for (const card of menuCards) {
+        const isHovering = intersects.some(intersect => intersect.object === card.getHitbox());
+        if (isHovering) {
+          card.hover();
+        } else {
+          card.unhover();
+        }
       }
-    };
+    }
 
     const onMouseDown = (event: MouseEvent) => {
       updateMousePosition(event);
       raycaster.setFromCamera(mouse, camera);
       
       const intersects = raycaster.intersectObjects(scene.children, true);
-      const hitboxIntersect = intersects.find(intersect => intersect.object === card.getHitbox());
-      
-      if (hitboxIntersect) {
-        draggedCard = card;
-        card.startDrag(hitboxIntersect.point);
+      for (const card of menuCards) {
+        const hitboxIntersect = intersects.find(intersect => intersect.object === card.getHitbox());
+        
+        if (hitboxIntersect) {
+          draggedCard = card;
+          card.startDrag(hitboxIntersect.point);
+        }
       }
     };
 
@@ -118,7 +132,7 @@ const ScenePage: React.FC = () => {
       ref={canvasRef}
       style={{
         position: 'absolute',
-        // pointerEvents: 'auto',
+        pointerEvents: 'auto',
         top: 0,
         left: 0,
         width: '100%',
