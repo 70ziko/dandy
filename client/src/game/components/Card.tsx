@@ -317,10 +317,28 @@ export class GuiCard extends Card {
     this.alt = params.alt;
     this.onClick = params.onClick;
 
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    canvas.width = 512;
+    canvas.height = 512;
+    
+    if (context) {
+      context.fillStyle = '#000000';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.font = 'bold 48px Arial';
+      context.fillStyle = '#FFFFFF';
+      context.textAlign = 'center';
+      context.textBaseline = 'middle';
+      context.fillText(this.alt, canvas.width / 2, canvas.height / 2);
+    }
+
+    const defaultTexture = new THREE.CanvasTexture(canvas);
+    
     const loader = new THREE.TextureLoader();
     const texture = this.frontTextureUrl
       ? loader.load(this.frontTextureUrl)
-      : loader.load('/assets/black-reverse.jpg');
+      : defaultTexture;
+
     const frontMaterial = new THREE.MeshPhongMaterial({
       map: texture,
       side: THREE.FrontSide,

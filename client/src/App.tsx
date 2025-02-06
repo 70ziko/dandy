@@ -33,7 +33,7 @@ const ScenePage: React.FC = () => {
     const card = new GuiCard({
       scene,
       alt: 'PLAY',
-      frontTexture: '/assets/black-reverse.jpg',
+      // frontTexture: '/assets/black-reverse.jpg',
       onClick: () => {
         navigate('/game');
       },
@@ -115,7 +115,7 @@ const ScenePage: React.FC = () => {
       ref={canvasRef}
       style={{
         position: 'absolute',
-        pointerEvents: 'auto',
+        // pointerEvents: 'auto',
         top: 0,
         left: 0,
         width: '100%',
