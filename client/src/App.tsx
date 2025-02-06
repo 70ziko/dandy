@@ -1,12 +1,13 @@
 import React, { useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import * as THREE from 'three';
-import FluidBackground from 'components/fluidBackground';
+import FluidBackground, { FluidBackgroundHandle } from 'components/fluidBackground';
 import CardGame from 'game';
 import { GuiCard } from 'game/components/Card';
 
 const ScenePage: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fluidRef = useRef<FluidBackgroundHandle>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -25,6 +26,7 @@ const ScenePage: React.FC = () => {
       0.1,
       1000
     );
+    camera.name = 'camera';
     camera.position.z = 5;
 
     const raycaster = new THREE.Raycaster();
@@ -40,6 +42,7 @@ const ScenePage: React.FC = () => {
         },
         position: new THREE.Vector3(-1, 0, 0),
         rotation: new THREE.Euler(0, 0, 0),
+        fluidRef: fluidRef as React.RefObject<FluidBackgroundHandle>
       }),
       new GuiCard({
         scene, 
@@ -53,8 +56,9 @@ const ScenePage: React.FC = () => {
 
     let draggedCard: GuiCard | null = null;
 
-    const light = new THREE.AmbientLight(0xFFFFFF, 1)
-    scene.add(light)
+    const light = new THREE.AmbientLight(0xFFFFFF, 1);
+    scene.add(light);
+    scene.add(camera);
     
     const updateMousePosition = (event: MouseEvent) => {
       const rect = renderer.domElement.getBoundingClientRect();
@@ -127,7 +131,7 @@ const ScenePage: React.FC = () => {
 
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100vh' }}>
-      <FluidBackground />
+      <FluidBackground ref={fluidRef} />
       <canvas
       ref={canvasRef}
       style={{

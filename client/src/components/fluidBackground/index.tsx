@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, forwardRef, useImperativeHandle } from "react";
 import {
   HalfFloatType,
   OrthographicCamera,
@@ -32,8 +32,35 @@ function loadGradients(textureLoader: TextureLoader) {
   }
 }
 
-const FluidBackground: React.FC = () => {
+export interface FluidBackgroundHandle {
+  addInput: (x: number, y: number) => void;
+}
+
+const FluidBackground = forwardRef<FluidBackgroundHandle>((_, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const inputTouchesRef = useRef<{ id: string | number; input: Vector4 }[]>([]);
+  const aspectRef = useRef(new Vector2(1, 1));
+
+  useImperativeHandle(ref, () => ({
+    addInput: (x: number, y: number) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      const relX = (x / canvas.clientWidth) * aspectRef.current.x;
+      const relY = 1.0 - (y / canvas.clientHeight);
+
+      if (inputTouchesRef.current.length === 0) {
+        inputTouchesRef.current.push({ 
+          id: "external", 
+          input: new Vector4(relX, relY, 0, 0) 
+        });
+      } else {
+        const touch = inputTouchesRef.current[0].input;
+        touch.setZ(relX - touch.x).setW(relY - touch.y);
+        touch.setX(relX).setY(relY);
+      }
+    }
+  }));
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -76,6 +103,7 @@ const FluidBackground: React.FC = () => {
       configuration.Scale * window.innerHeight
     );
     const aspect = new Vector2(resolution.x / resolution.y, 1.0);
+    aspectRef.current = aspect;
 
     const velocityRT = new RenderTarget(resolution, 2, RGBAFormat, HalfFloatType);
     const divergenceRT = new RenderTarget(resolution, 1, RGBAFormat, HalfFloatType);
@@ -115,7 +143,6 @@ const FluidBackground: React.FC = () => {
     const textureLoader = new TextureLoader().setPath("./resources/");
     loadGradients(textureLoader);
 
-    let inputTouches: { id: string | number; input: Vector4 }[] = [];
     const handleResize = () => {
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setPixelRatio(window.devicePixelRatio);
@@ -128,60 +155,11 @@ const FluidBackground: React.FC = () => {
       pressureRT.resize(resolution);
       colorRT.resize(resolution);
       aspect.set(resolution.x / resolution.y, 1.0);
+      aspectRef.current = aspect;
       touchForceAdditionPass.update({ aspect });
       touchColorAdditionPass.update({ aspect });
     };
     window.addEventListener("resize", handleResize);
-
-    const getRelativeCoords = (clientX: number, clientY: number) => {
-      const x = (clientX / canvas.clientWidth) * aspect.x;
-      const y = 1.0 - (clientY / canvas.clientHeight);
-      return { x, y };
-    };
-
-    const onMouseMove = (event: MouseEvent) => {
-      console.log("onMouseMove");
-      const { x, y } = getRelativeCoords(event.clientX, event.clientY);
-      if (inputTouches.length === 0) {
-        inputTouches.push({ id: "mouse", input: new Vector4(x, y, 0, 0) });
-      } else {
-        const touch = inputTouches[0].input;
-        touch.setZ(x - touch.x).setW(y - touch.y);
-        touch.setX(x).setY(y);
-      }
-    };
-
-    canvas.addEventListener("mousemove", onMouseMove);
-
-    const onTouchStart = (event: TouchEvent) => {
-      for (const touchEvent of Array.from(event.changedTouches)) {
-        const { x, y } = getRelativeCoords(touchEvent.clientX, touchEvent.clientY);
-        inputTouches.push({
-          id: touchEvent.identifier,
-          input: new Vector4(x, y, 0, 0)
-        });
-      }
-    };
-    const onTouchMove = (event: TouchEvent) => {
-      event.preventDefault();
-      for (const touchEvent of Array.from(event.changedTouches)) {
-        const reg = inputTouches.find(t => t.id === touchEvent.identifier);
-        if (reg) {
-          const { x, y } = getRelativeCoords(touchEvent.clientX, touchEvent.clientY);
-          reg.input.setZ(x - reg.input.x).setW(y - reg.input.y);
-          reg.input.setX(x).setY(y);
-        }
-      }
-    };
-    const onTouchEnd = (event: TouchEvent) => {
-      for (const touchEvent of Array.from(event.changedTouches)) {
-        inputTouches = inputTouches.filter(t => t.id !== touchEvent.identifier);
-      }
-    };
-    canvas.addEventListener("touchstart", onTouchStart);
-    canvas.addEventListener("touchmove", onTouchMove);
-    canvas.addEventListener("touchend", onTouchEnd);
-    canvas.addEventListener("touchcancel", onTouchEnd);
 
     // Render loop.
     function render() {
@@ -192,9 +170,9 @@ const FluidBackground: React.FC = () => {
         renderer.render(velocityAdvectionPass.scene, camera);
   
         // Process input forces.
-        if (inputTouches.length > 0) {
+        if (inputTouchesRef.current.length > 0) {
           touchForceAdditionPass.update({
-            touches: inputTouches,
+            touches: inputTouchesRef.current,
             radius: configuration.Radius,
             velocity: v
           });
@@ -203,7 +181,7 @@ const FluidBackground: React.FC = () => {
   
           if (configuration.AddColor) {
             touchColorAdditionPass.update({
-              touches: inputTouches,
+              touches: inputTouchesRef.current,
               radius: configuration.Radius,
               color: c
             });
@@ -301,11 +279,6 @@ const FluidBackground: React.FC = () => {
     return () => {
       cancelAnimationFrame(animationId);
       window.removeEventListener("resize", handleResize);
-      canvas.removeEventListener("mousemove", onMouseMove);
-      canvas.removeEventListener("touchstart", onTouchStart);
-      canvas.removeEventListener("touchmove", onTouchMove);
-      canvas.removeEventListener("touchend", onTouchEnd);
-      canvas.removeEventListener("touchcancel", onTouchEnd);
     };
   }, []);
 
@@ -321,6 +294,6 @@ const FluidBackground: React.FC = () => {
       }}
     />
   );
-};
+});
 
 export default FluidBackground;

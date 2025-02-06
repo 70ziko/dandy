@@ -1,10 +1,12 @@
 import * as THREE from 'three';
 import gsap from 'gsap';
+import { FluidBackgroundHandle } from 'components/fluidBackground';
 
 interface CardConstructorParams {
   scene: THREE.Scene;
   position?: THREE.Vector3;
   rotation?: THREE.Euler;
+  fluidRef?: React.RefObject<FluidBackgroundHandle>;
 }
 
 export class Card {
@@ -19,8 +21,10 @@ export class Card {
   protected floatingAnimation: gsap.core.Tween | null;
   protected originalPosition: THREE.Vector3;
   protected originalRotation: THREE.Euler;
+  protected fluidRef?: React.RefObject<FluidBackgroundHandle>;
+  protected edgePoints: THREE.Vector3[];
 
-  constructor({ scene, position = new THREE.Vector3(), rotation = new THREE.Euler() }: CardConstructorParams) {
+  constructor({ scene, position = new THREE.Vector3(), rotation = new THREE.Euler(), fluidRef }: CardConstructorParams) {
     this.scene = scene;
     this.mesh = this.createMesh();
     this.hitbox = this.createHitbox();
@@ -44,6 +48,8 @@ export class Card {
 
     this.originalPosition = position.clone();
     this.originalRotation = rotation.clone();
+    this.fluidRef = fluidRef;
+    this.edgePoints = this.calculateEdgePoints();
   }
 
   protected createMesh(): THREE.Mesh {
@@ -315,7 +321,8 @@ export class Card {
       y: mousePos.y,
       z: mousePos.z,
       duration: 0.2,
-      ease: "power2.out"
+      ease: "power2.out",
+      onUpdate: () => this.updateFluidBackground()
     });
   }
 
@@ -335,6 +342,36 @@ export class Card {
     } else {
       this.mesh.material.dispose();
     }
+  }
+
+  protected calculateEdgePoints(): THREE.Vector3[] {
+    const width = 1;
+    const height = 1.618;
+    return [
+      new THREE.Vector3(-width/2, -height/2, 0),
+      new THREE.Vector3(width/2, -height/2, 0),
+      new THREE.Vector3(width/2, height/2, 0),
+      new THREE.Vector3(-width/2, height/2, 0)
+    ];
+  }
+
+  protected updateFluidBackground(): void {
+    if (!this.fluidRef?.current) return;
+
+    // Convert edge points to screen coordinates
+    const screenPoints: { x: number, y: number }[] = this.edgePoints.map(point => {
+      const worldPos = point.clone().applyMatrix4(this.mesh.matrixWorld);
+      const vector = worldPos.project(this.scene.getObjectByName('camera') as THREE.Camera);
+      return {
+        x: (vector.x + 1) * window.innerWidth / 2,
+        y: (-vector.y + 1) * window.innerHeight / 2
+      };
+    });
+
+    // Send each edge point to the fluid background
+    screenPoints.forEach(point => {
+      this.fluidRef?.current?.addInput(point.x, point.y);
+    });
   }
 }
 
