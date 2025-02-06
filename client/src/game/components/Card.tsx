@@ -71,11 +71,49 @@ export class Card {
       bevelThickness: 0.01,
       bevelSize: 0.01,
       bevelOffset: 0,
-      bevelSegments: 3
+      bevelSegments: 3,
+      UVGenerator: {
+        generateSideWallUV: function (geometry: THREE.ExtrudeGeometry, vertices: number[], indexA: number, indexB: number, indexC: number, indexD: number) {
+          return [
+            new THREE.Vector2(0, 0),
+            new THREE.Vector2(1, 0),
+            new THREE.Vector2(1, 1),
+            new THREE.Vector2(0, 1)
+          ];
+        },
+        generateTopUV: function (geometry: THREE.ExtrudeGeometry, vertices: number[], indexA: number, indexB: number, indexC: number) {
+          return [
+            new THREE.Vector2(0, 1),
+            new THREE.Vector2(1, 1),
+            new THREE.Vector2(1, 0)
+          ];
+        },
+        generateBottomUV: function (geometry: THREE.ExtrudeGeometry, vertices: number[], indexA: number, indexB: number, indexC: number) {
+          return [
+            new THREE.Vector2(0, 1),
+            new THREE.Vector2(1, 1),
+            new THREE.Vector2(1, 0)
+          ];
+        }
+      }
     };
 
     const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
     
+    const uvAttribute = geometry.attributes.uv;
+    const positions = geometry.attributes.position;
+    
+    for (let i = 0; i < uvAttribute.count; i++) {
+      const x = positions.getX(i);
+      const y = positions.getY(i);
+      
+      uvAttribute.setXY(
+        i,
+        (x + width/2) / width,        // normalize x from -0.5,0.5 to 0,1
+        (y + height/2) / height       // normalize y from -0.809,0.809 to 0,1
+      );
+    }
+
     const textureLoader = new THREE.TextureLoader();
     const frontTexture = textureLoader.load('/assets/black-reverse.jpg');
     const backTexture = textureLoader.load('/assets/black-reverse.jpg');
@@ -319,8 +357,8 @@ export class GuiCard extends Card {
 
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
-    canvas.width = 128;
-    canvas.height = 128;
+    canvas.width = 420;
+    canvas.height = 420;
     
     if (context) {
       context.fillStyle = '#000000';
