@@ -33,7 +33,7 @@ function loadGradients(textureLoader: TextureLoader) {
 }
 
 export interface FluidBackgroundHandle {
-  addInput: (x: number, y: number) => void;
+  addInput: (x: number, y: number, velocityX?: number, velocityY?: number) => void;
 }
 
 const FluidBackground = forwardRef<FluidBackgroundHandle>((_, ref) => {
@@ -42,22 +42,25 @@ const FluidBackground = forwardRef<FluidBackgroundHandle>((_, ref) => {
   const aspectRef = useRef(new Vector2(1, 1));
 
   useImperativeHandle(ref, () => ({
-    addInput: (x: number, y: number) => {
+    addInput: (x: number, y: number, velocityX: number = 0, velocityY: number = 0) => {
       const canvas = canvasRef.current;
       if (!canvas) return;
 
       const relX = (x / canvas.clientWidth) * aspectRef.current.x;
       const relY = 1.0 - (y / canvas.clientHeight);
+      
+      // Scale velocity based on screen dimensions
+      const relVelX = (velocityX / canvas.clientWidth) * aspectRef.current.x;
+      const relVelY = -(velocityY / canvas.clientHeight);
 
       if (inputTouchesRef.current.length === 0) {
         inputTouchesRef.current.push({ 
           id: "external", 
-          input: new Vector4(relX, relY, 0, 0) 
+          input: new Vector4(relX, relY, relVelX, relVelY) 
         });
       } else {
         const touch = inputTouchesRef.current[0].input;
-        touch.setZ(relX - touch.x).setW(relY - touch.y);
-        touch.setX(relX).setY(relY);
+        touch.setX(relX).setY(relY).setZ(relVelX).setW(relVelY);
       }
     }
   }));
