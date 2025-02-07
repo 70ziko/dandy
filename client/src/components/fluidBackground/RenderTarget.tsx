@@ -1,4 +1,10 @@
-import { Texture, Vector2, WebGLRenderer, WebGLRenderTarget, TextureDataType } from "three";
+import {
+  Texture,
+  Vector2,
+  WebGLRenderer,
+  WebGLRenderTarget,
+  TextureDataType,
+} from "three";
 
 interface IBuffer {
   target: WebGLRenderTarget;
@@ -22,15 +28,15 @@ export class RenderTarget {
           format,
           type: type as TextureDataType,
           depthBuffer: false,
-          stencilBuffer: false
+          stencilBuffer: false,
         }),
-        needsResize: false
-      }
+        needsResize: false,
+      },
     ];
     for (let i = 1; i < nBuffers; ++i) {
       this.buffers[i] = {
         target: this.buffers[0].target.clone(),
-        needsResize: false
+        needsResize: false,
       };
     }
   }

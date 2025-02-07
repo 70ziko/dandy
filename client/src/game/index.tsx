@@ -1,7 +1,7 @@
-import React, { useEffect, useRef } from 'react';
-import * as THREE from 'three';
-import gsap from 'gsap';
-import { Hand } from './components/Hand';
+import React, { useEffect, useRef } from "react";
+import * as THREE from "three";
+import gsap from "gsap";
+import { Hand } from "./components/Hand";
 
 interface SceneRefs {
   scene: THREE.Scene;
@@ -38,7 +38,7 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
     const cleanupScene = () => {
       if (sceneRef.current) {
         const { scene, renderer } = sceneRef.current;
-        
+
         if (handRef.current) {
           handRef.current.remove();
           handRef.current = null;
@@ -50,7 +50,7 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
             if (object.material instanceof THREE.Material) {
               object.material.dispose();
             } else if (Array.isArray(object.material)) {
-              object.material.forEach(material => material.dispose());
+              object.material.forEach((material) => material.dispose());
             }
           }
         });
@@ -113,7 +113,7 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
       const mouse = new THREE.Vector2();
       let lastRaycastTime = 0;
       let draggedCard: Card | null = null;
-      
+
       const updateMousePosition = (event: MouseEvent) => {
         mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
         mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -122,26 +122,32 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
       const onMouseMove = (event: MouseEvent) => {
         if (!handRef.current || !sceneRef.current) return;
         updateMousePosition(event);
-        
+
         if (draggedCard) {
           raycaster.setFromCamera(mouse, sceneRef.current.camera);
           const dragPosition = new THREE.Vector3();
           // Project ray at the card's current distance from camera
-          const distance = draggedCard.mesh.position.distanceTo(sceneRef.current.camera.position);
+          const distance = draggedCard.mesh.position.distanceTo(
+            sceneRef.current.camera.position
+          );
           raycaster.ray.at(distance, dragPosition);
           draggedCard.drag(dragPosition);
           return;
         }
-        
+
         if (event.timeStamp - lastRaycastTime < 16) return; // Throttle to ~60fps
         lastRaycastTime = event.timeStamp;
 
         raycaster.setFromCamera(mouse, sceneRef.current.camera);
-        const hitboxes = (handRef.current as any).cards.map((card: Card) => card.hitbox);
+        const hitboxes = (handRef.current as any).cards.map(
+          (card: Card) => card.hitbox
+        );
         const intersects = raycaster.intersectObjects(hitboxes, false);
 
         (handRef.current as any).cards.forEach((card: Card) => {
-          const isIntersected = intersects.some(intersect => intersect.object === card.hitbox);
+          const isIntersected = intersects.some(
+            (intersect) => intersect.object === card.hitbox
+          );
           if (isIntersected && !card.isHovered) {
             card.hover();
           } else if (!isIntersected && card.isHovered) {
@@ -154,9 +160,11 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
       const onMouseDown = (event: MouseEvent) => {
         if (!handRef.current || !sceneRef.current) return;
         updateMousePosition(event);
-        
+
         raycaster.setFromCamera(mouse, sceneRef.current.camera);
-        const hitboxes = (handRef.current as any).cards.map((card: Card) => card.hitbox);
+        const hitboxes = (handRef.current as any).cards.map(
+          (card: Card) => card.hitbox
+        );
         const intersects = raycaster.intersectObjects(hitboxes, false);
 
         if (intersects.length > 0) {
@@ -177,14 +185,14 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
         }
       };
 
-      window.addEventListener('mousemove', onMouseMove);
-      window.addEventListener('mousedown', onMouseDown);
-      window.addEventListener('mouseup', onMouseUp);
+      window.addEventListener("mousemove", onMouseMove);
+      window.addEventListener("mousedown", onMouseDown);
+      window.addEventListener("mouseup", onMouseUp);
 
       return () => {
-        window.removeEventListener('mousemove', onMouseMove);
-        window.removeEventListener('mousedown', onMouseDown);
-        window.removeEventListener('mouseup', onMouseUp);
+        window.removeEventListener("mousemove", onMouseMove);
+        window.removeEventListener("mousedown", onMouseDown);
+        window.removeEventListener("mouseup", onMouseUp);
       };
     };
 
@@ -194,11 +202,11 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
     handRef.current = new Hand({
       scene: sceneRef.current.scene,
       numCards,
-      tablePosition: new THREE.Vector3(0, -6, 5)
+      tablePosition: new THREE.Vector3(0, -6, 5),
     });
 
     const cleanupRaycaster = setupRaycaster();
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
 
     // Render loop
     const animate = () => {
@@ -219,7 +227,7 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
         cancelAnimationFrame(animationFrameRef.current);
       }
       cleanupScene();
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
       cleanupRaycaster();
     };
   }, [numCards]);

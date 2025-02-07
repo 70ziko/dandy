@@ -1,4 +1,9 @@
-import React, { useRef, useEffect, forwardRef, useImperativeHandle } from "react";
+import React, {
+  useRef,
+  useEffect,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
 import {
   HalfFloatType,
   OrthographicCamera,
@@ -8,7 +13,7 @@ import {
   UnsignedByteType,
   Vector2,
   Vector4,
-  WebGLRenderer
+  WebGLRenderer,
 } from "three";
 import { AdvectionPass } from "./passes/AdvectionPass";
 import { BoundaryPass } from "./passes/BoundaryPass";
@@ -33,7 +38,12 @@ function loadGradients(textureLoader: TextureLoader) {
 }
 
 export interface FluidBackgroundHandle {
-  addInput: (x: number, y: number, velocityX?: number, velocityY?: number) => void;
+  addInput: (
+    x: number,
+    y: number,
+    velocityX?: number,
+    velocityY?: number
+  ) => void;
 }
 
 const FluidBackground = forwardRef<FluidBackgroundHandle>((_, ref) => {
@@ -42,27 +52,32 @@ const FluidBackground = forwardRef<FluidBackgroundHandle>((_, ref) => {
   const aspectRef = useRef(new Vector2(1, 1));
 
   useImperativeHandle(ref, () => ({
-    addInput: (x: number, y: number, velocityX: number = 0, velocityY: number = 0) => {
+    addInput: (
+      x: number,
+      y: number,
+      velocityX: number = 0,
+      velocityY: number = 0
+    ) => {
       const canvas = canvasRef.current;
       if (!canvas) return;
 
       const relX = (x / canvas.clientWidth) * aspectRef.current.x;
-      const relY = 1.0 - (y / canvas.clientHeight);
-      
+      const relY = 1.0 - y / canvas.clientHeight;
+
       // Scale velocity based on screen dimensions
       const relVelX = (velocityX / canvas.clientWidth) * aspectRef.current.x;
       const relVelY = -(velocityY / canvas.clientHeight);
 
       if (inputTouchesRef.current.length === 0) {
-        inputTouchesRef.current.push({ 
-          id: "external", 
-          input: new Vector4(relX, relY, relVelX, relVelY) 
+        inputTouchesRef.current.push({
+          id: "external",
+          input: new Vector4(relX, relY, relVelX, relVelY),
         });
       } else {
         const touch = inputTouchesRef.current[0].input;
         touch.setX(relX).setY(relY).setZ(relVelX).setW(relVelY);
       }
-    }
+    },
   }));
 
   useEffect(() => {
@@ -83,15 +98,15 @@ const FluidBackground = forwardRef<FluidBackgroundHandle>((_, ref) => {
       Reset: () => {
         velocityAdvectionPass.update({
           inputTexture: velocityInitTexture,
-          velocity: velocityInitTexture
+          velocity: velocityInitTexture,
         });
         colorAdvectionPass.update({
           inputTexture: colorInitTexture,
-          velocity: velocityInitTexture
+          velocity: velocityInitTexture,
         });
         v = undefined;
         c = undefined;
-      }
+      },
     };
 
     const renderer = new WebGLRenderer({ canvas });
@@ -108,10 +123,30 @@ const FluidBackground = forwardRef<FluidBackgroundHandle>((_, ref) => {
     const aspect = new Vector2(resolution.x / resolution.y, 1.0);
     aspectRef.current = aspect;
 
-    const velocityRT = new RenderTarget(resolution, 2, RGBAFormat, HalfFloatType);
-    const divergenceRT = new RenderTarget(resolution, 1, RGBAFormat, HalfFloatType);
-    const pressureRT = new RenderTarget(resolution, 2, RGBAFormat, HalfFloatType);
-    const colorRT = new RenderTarget(resolution, 2, RGBFormat, UnsignedByteType);
+    const velocityRT = new RenderTarget(
+      resolution,
+      2,
+      RGBAFormat,
+      HalfFloatType
+    );
+    const divergenceRT = new RenderTarget(
+      resolution,
+      1,
+      RGBAFormat,
+      HalfFloatType
+    );
+    const pressureRT = new RenderTarget(
+      resolution,
+      2,
+      RGBAFormat,
+      HalfFloatType
+    );
+    const colorRT = new RenderTarget(
+      resolution,
+      2,
+      RGBFormat,
+      UnsignedByteType
+    );
 
     let v: any, c: any, d: any, p: any;
 
@@ -171,43 +206,43 @@ const FluidBackground = forwardRef<FluidBackgroundHandle>((_, ref) => {
         velocityAdvectionPass.update({ timeDelta: dt });
         v = velocityRT.set(renderer);
         renderer.render(velocityAdvectionPass.scene, camera);
-  
+
         // Process input forces.
         if (inputTouchesRef.current.length > 0) {
           touchForceAdditionPass.update({
             touches: inputTouchesRef.current,
             radius: configuration.Radius,
-            velocity: v
+            velocity: v,
           });
           v = velocityRT.set(renderer);
           renderer.render(touchForceAdditionPass.scene, camera);
-  
+
           if (configuration.AddColor) {
             touchColorAdditionPass.update({
               touches: inputTouchesRef.current,
               radius: configuration.Radius,
-              color: c
+              color: c,
             });
             c = colorRT.set(renderer);
             renderer.render(touchColorAdditionPass.scene, camera);
           }
         }
-  
+
         // Apply velocity boundaries.
         if (configuration.Boundaries) {
           velocityBoundary.update({ velocity: v });
           v = velocityRT.set(renderer);
           renderer.render(velocityBoundary.scene, camera);
         }
-  
+
         // Compute divergence.
         velocityDivergencePass.update({
           timeDelta: dt,
-          velocity: v
+          velocity: v,
         });
         d = divergenceRT.set(renderer);
         renderer.render(velocityDivergencePass.scene, camera);
-  
+
         // Solve for pressure via Jacobi iterations.
         pressurePass.update({ divergence: d });
         for (let i = 0; i < configuration.Iterations; ++i) {
@@ -215,36 +250,36 @@ const FluidBackground = forwardRef<FluidBackgroundHandle>((_, ref) => {
           renderer.render(pressurePass.scene, camera);
           pressurePass.update({ previousIteration: p });
         }
-  
+
         // Subtract pressure gradient.
         pressureSubstractionPass.update({
           timeDelta: dt,
           velocity: v,
-          pressure: p
+          pressure: p,
         });
         v = velocityRT.set(renderer);
         renderer.render(pressureSubstractionPass.scene, camera);
-  
+
         // Advect the color buffer.
         colorAdvectionPass.update({
           timeDelta: dt,
           inputTexture: c,
           velocity: v,
-          decay: configuration.ColorDecay
+          decay: configuration.ColorDecay,
         });
         c = colorRT.set(renderer);
         renderer.render(colorAdvectionPass.scene, camera);
-  
+
         // Prepare passes for next frame.
         velocityAdvectionPass.update({
           inputTexture: v,
-          velocity: v
+          velocity: v,
         });
         colorAdvectionPass.update({
-          inputTexture: c
+          inputTexture: c,
         });
       }
-  
+
       renderer.setRenderTarget(null);
       let visualization: any;
       switch (configuration.Visualize) {
@@ -267,18 +302,18 @@ const FluidBackground = forwardRef<FluidBackgroundHandle>((_, ref) => {
       compositionPass.update({
         colorBuffer: visualization,
         mode: configuration.Mode,
-        gradient: gradientTextures[0]
+        gradient: gradientTextures[0],
       });
       renderer.render(compositionPass.scene, camera);
     }
-  
+
     let animationId: number;
     function animate() {
       render();
       animationId = requestAnimationFrame(animate);
     }
     animate();
-  
+
     return () => {
       cancelAnimationFrame(animationId);
       window.removeEventListener("resize", handleResize);
@@ -293,7 +328,7 @@ const FluidBackground = forwardRef<FluidBackgroundHandle>((_, ref) => {
         top: 0,
         left: 0,
         width: "100vw",
-        height: "100vh"
+        height: "100vh",
       }}
     />
   );

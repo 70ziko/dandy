@@ -1,6 +1,6 @@
-import * as THREE from 'three';
-import gsap from 'gsap';
-import { FluidBackgroundHandle } from 'components/fluidBackground';
+import * as THREE from "three";
+import gsap from "gsap";
+import { FluidBackgroundHandle } from "components/fluidBackground";
 
 interface CardConstructorParams {
   scene: THREE.Scene;
@@ -29,22 +29,27 @@ export class Card {
   protected lastUpdateTime: number = 0;
   protected updateInterval: number = 16; // ~60fps in milliseconds
 
-  constructor({ scene, position = new THREE.Vector3(), rotation = new THREE.Euler(), fluidRef }: CardConstructorParams) {
+  constructor({
+    scene,
+    position = new THREE.Vector3(),
+    rotation = new THREE.Euler(),
+    fluidRef,
+  }: CardConstructorParams) {
     this.scene = scene;
     this.mesh = this.createMesh();
     this.hitbox = this.createHitbox();
-    
+
     this.basePosition = position.clone();
     this.baseRotation = rotation.clone();
-    
+
     this.mesh.position.copy(position);
     this.mesh.rotation.copy(rotation);
     this.hitbox.position.copy(position);
     this.hitbox.rotation.copy(rotation);
-    
+
     this.scene.add(this.mesh);
     this.scene.add(this.hitbox);
-    
+
     this.isHovered = false;
     this.isDragging = false;
     this.currentTween = null;
@@ -55,7 +60,7 @@ export class Card {
     this.originalRotation = rotation.clone();
     this.fluidRef = fluidRef;
     this.edgePoints = this.calculateEdgePoints();
-    
+
     // Initialize last position and time for velocity calculation
     this.lastPosition = position.clone();
     this.lastTime = performance.now();
@@ -68,13 +73,19 @@ export class Card {
     const radius = 0.05;
 
     const shape = new THREE.Shape();
-    const x = -width / 2, y = -height / 2;
-    
+    const x = -width / 2,
+      y = -height / 2;
+
     shape.moveTo(x + radius, y);
     shape.lineTo(x + width - radius, y);
     shape.quadraticCurveTo(x + width, y, x + width, y + radius);
     shape.lineTo(x + width, y + height - radius);
-    shape.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    shape.quadraticCurveTo(
+      x + width,
+      y + height,
+      x + width - radius,
+      y + height
+    );
     shape.lineTo(x + radius, y + height);
     shape.quadraticCurveTo(x, y + height, x, y + height - radius);
     shape.lineTo(x, y + radius);
@@ -88,75 +99,90 @@ export class Card {
       bevelOffset: 0,
       bevelSegments: 3,
       UVGenerator: {
-        generateSideWallUV: function (geometry: THREE.ExtrudeGeometry, vertices: number[], indexA: number, indexB: number, indexC: number, indexD: number) {
+        generateSideWallUV: function (
+          geometry: THREE.ExtrudeGeometry,
+          vertices: number[],
+          indexA: number,
+          indexB: number,
+          indexC: number,
+          indexD: number
+        ) {
           return [
             new THREE.Vector2(0, 0),
             new THREE.Vector2(1, 0),
             new THREE.Vector2(1, 1),
-            new THREE.Vector2(0, 1)
+            new THREE.Vector2(0, 1),
           ];
         },
-        generateTopUV: function (geometry: THREE.ExtrudeGeometry, vertices: number[], indexA: number, indexB: number, indexC: number) {
+        generateTopUV: function (
+          geometry: THREE.ExtrudeGeometry,
+          vertices: number[],
+          indexA: number,
+          indexB: number,
+          indexC: number
+        ) {
           return [
             new THREE.Vector2(0, 1),
             new THREE.Vector2(1, 1),
-            new THREE.Vector2(1, 0)
+            new THREE.Vector2(1, 0),
           ];
         },
-        generateBottomUV: function (geometry: THREE.ExtrudeGeometry, vertices: number[], indexA: number, indexB: number, indexC: number) {
+        generateBottomUV: function (
+          geometry: THREE.ExtrudeGeometry,
+          vertices: number[],
+          indexA: number,
+          indexB: number,
+          indexC: number
+        ) {
           return [
             new THREE.Vector2(0, 1),
             new THREE.Vector2(1, 1),
-            new THREE.Vector2(1, 0)
+            new THREE.Vector2(1, 0),
           ];
-        }
-      }
+        },
+      },
     };
 
     const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-    
+
     const uvAttribute = geometry.attributes.uv;
     const positions = geometry.attributes.position;
-    
+
     for (let i = 0; i < uvAttribute.count; i++) {
       const x = positions.getX(i);
       const y = positions.getY(i);
-      
-      uvAttribute.setXY(
-        i,
-        (x + width/2) / width,
-        (y + height/2) / height
-      );
+
+      uvAttribute.setXY(i, (x + width / 2) / width, (y + height / 2) / height);
     }
 
     const textureLoader = new THREE.TextureLoader();
-    const frontTexture = textureLoader.load('/assets/black-reverse.jpg');
-    const backTexture = textureLoader.load('/assets/black-reverse.jpg');
-    
-    const frontMaterial = new THREE.MeshPhongMaterial({ 
+    const frontTexture = textureLoader.load("/assets/black-reverse.jpg");
+    const backTexture = textureLoader.load("/assets/black-reverse.jpg");
+
+    const frontMaterial = new THREE.MeshPhongMaterial({
       map: frontTexture,
       side: THREE.FrontSide,
       shininess: 0,
       depthTest: false,
       polygonOffset: true,
       polygonOffsetFactor: 1,
-      polygonOffsetUnits: 1
+      polygonOffsetUnits: 1,
     });
-    
-    const backMaterial = new THREE.MeshPhongMaterial({ 
+
+    const backMaterial = new THREE.MeshPhongMaterial({
       map: backTexture,
       side: THREE.BackSide,
       shininess: 0,
       depthTest: false,
       polygonOffset: true,
       polygonOffsetFactor: 1,
-      polygonOffsetUnits: 1
+      polygonOffsetUnits: 1,
     });
-    
+
     const materials = [frontMaterial, backMaterial];
     const mesh = new THREE.Mesh(geometry, materials);
     geometry.center();
-    
+
     return mesh;
   }
 
@@ -167,11 +193,11 @@ export class Card {
     const material = new THREE.MeshBasicMaterial({
       transparent: true,
       opacity: 0,
-      side: THREE.DoubleSide
+      side: THREE.DoubleSide,
     });
     return new THREE.Mesh(geometry, material);
   }
-  
+
   public getHitbox(): THREE.Mesh {
     return this.hitbox;
   }
@@ -191,25 +217,25 @@ export class Card {
         yoyo: true,
         repeat: -1,
         ease: "sine.inOut",
-        onUpdate: () => this.updateFluidBackground()
+        onUpdate: () => this.updateFluidBackground(),
       });
     }
   }
 
   public spreadFrom(center: number, direction: number, amount: number): void {
     if (this.isHovered) return;
-    
-    const targetX = this.basePosition.x + (direction * amount);
-    
+
+    const targetX = this.basePosition.x + direction * amount;
+
     if (this.currentTween) {
       this.currentTween.kill();
     }
-    
+
     this.currentTween = gsap.to(this.mesh.position, {
       x: targetX,
       duration: 0.5,
       ease: "power2.out",
-      onUpdate: () => this.updateFluidBackground()
+      onUpdate: () => this.updateFluidBackground(),
     });
   }
 
@@ -218,7 +244,7 @@ export class Card {
       if (this.currentTween) {
         this.currentTween.kill();
       }
-      
+
       this.currentTween = gsap.timeline();
       this.currentTween
         .to(this.mesh.position, {
@@ -227,56 +253,63 @@ export class Card {
           z: this.originalPosition.z,
           duration: 0.5,
           ease: "power2.out",
-          onUpdate: () => this.updateFluidBackground()
+          onUpdate: () => this.updateFluidBackground(),
         })
-        .to(this.mesh.rotation, {
-          x: this.originalRotation.x,
-          y: this.originalRotation.y,
-          z: this.originalRotation.z,
-          duration: 0.5,
-          ease: "power2.out",
-          onUpdate: () => this.updateFluidBackground()
-        }, "-=0.5");
+        .to(
+          this.mesh.rotation,
+          {
+            x: this.originalRotation.x,
+            y: this.originalRotation.y,
+            z: this.originalRotation.z,
+            duration: 0.5,
+            ease: "power2.out",
+            onUpdate: () => this.updateFluidBackground(),
+          },
+          "-=0.5"
+        );
     }
   }
 
   public hover(): void {
     this.isHovered = true;
-    
+
     if (this.floatingAnimation) {
       this.floatingAnimation.kill();
     }
-    
+
     if (this.currentTween) {
       this.currentTween.kill();
     }
-    
+
     const tl = gsap.timeline();
-    
+
     tl.to(this.mesh.position, {
       y: this.basePosition.y + 0.5,
       z: this.basePosition.z - 0.5,
       duration: 0.4,
       ease: "back.out(1.7)",
-      onUpdate: () => this.updateFluidBackground()
-    })
-    .to(this.mesh.rotation, {
-      x: -Math.PI * 0.1,
-      duration: 0.3,
-      ease: "power2.out",
-      onUpdate: () => this.updateFluidBackground()
-    }, "-=0.2");
-    
+      onUpdate: () => this.updateFluidBackground(),
+    }).to(
+      this.mesh.rotation,
+      {
+        x: -Math.PI * 0.1,
+        duration: 0.3,
+        ease: "power2.out",
+        onUpdate: () => this.updateFluidBackground(),
+      },
+      "-=0.2"
+    );
+
     this.currentTween = tl;
   }
 
   public unhover(): void {
     this.isHovered = false;
-    
+
     if (this.currentTween) {
       this.currentTween.kill();
     }
-    
+
     const tl = gsap.timeline({
       onComplete: () => {
         if (!this.isHovered) {
@@ -284,26 +317,29 @@ export class Card {
           this.mesh.rotation.copy(this.originalRotation);
           this.startFloatingAnimation();
         }
-      }
+      },
     });
-    
+
     tl.to(this.mesh.position, {
       x: this.originalPosition.x,
       y: this.originalPosition.y,
       z: this.originalPosition.z,
       duration: 0.4,
       ease: "power3.out",
-      onUpdate: () => this.updateFluidBackground()
-    })
-    .to(this.mesh.rotation, {
-      x: this.originalRotation.x,
-      y: this.originalRotation.y,
-      z: this.originalRotation.z,
-      duration: 0.3,
-      ease: "power2.out",
-      onUpdate: () => this.updateFluidBackground()
-    }, "-=0.2");
-    
+      onUpdate: () => this.updateFluidBackground(),
+    }).to(
+      this.mesh.rotation,
+      {
+        x: this.originalRotation.x,
+        y: this.originalRotation.y,
+        z: this.originalRotation.z,
+        duration: 0.3,
+        ease: "power2.out",
+        onUpdate: () => this.updateFluidBackground(),
+      },
+      "-=0.2"
+    );
+
     this.currentTween = tl;
   }
 
@@ -321,7 +357,7 @@ export class Card {
       z: mousePos.z,
       duration: 0.2,
       ease: "power2.out",
-      onUpdate: () => this.updateFluidBackground()
+      onUpdate: () => this.updateFluidBackground(),
     });
   }
 
@@ -336,7 +372,7 @@ export class Card {
       z: mousePos.z,
       duration: 0.2,
       ease: "power2.out",
-      onUpdate: () => this.updateFluidBackground()
+      onUpdate: () => this.updateFluidBackground(),
     });
   }
 
@@ -352,7 +388,7 @@ export class Card {
     this.mesh.geometry.dispose();
     this.hitbox.geometry.dispose();
     if (Array.isArray(this.mesh.material)) {
-      this.mesh.material.forEach(material => material.dispose());
+      this.mesh.material.forEach((material) => material.dispose());
     } else {
       this.mesh.material.dispose();
     }
@@ -363,29 +399,29 @@ export class Card {
     const height = 1.618;
     const numAdditional = 4; // Additional points along each edge
     const points: THREE.Vector3[] = [];
-    
+
     // Bottom edge
     for (let i = 0; i <= numAdditional; i++) {
       const t = i / numAdditional;
-      points.push(new THREE.Vector3(-width/2 + width * t, -height/2, 0));
+      points.push(new THREE.Vector3(-width / 2 + width * t, -height / 2, 0));
     }
-    
+
     // Right edge
     for (let i = 1; i <= numAdditional; i++) {
       const t = i / numAdditional;
-      points.push(new THREE.Vector3(width/2, -height/2 + height * t, 0));
+      points.push(new THREE.Vector3(width / 2, -height / 2 + height * t, 0));
     }
-    
+
     // Top edge
     for (let i = 1; i <= numAdditional; i++) {
       const t = i / numAdditional;
-      points.push(new THREE.Vector3(width/2 - width * t, height/2, 0));
+      points.push(new THREE.Vector3(width / 2 - width * t, height / 2, 0));
     }
-    
+
     // Left edge
     for (let i = 1; i < numAdditional; i++) {
       const t = i / numAdditional;
-      points.push(new THREE.Vector3(-width/2, height/2 - height * t, 0));
+      points.push(new THREE.Vector3(-width / 2, height / 2 - height * t, 0));
     }
 
     return points;
@@ -398,120 +434,118 @@ export class Card {
     if (now - this.lastUpdateTime < this.updateInterval) return;
     this.lastUpdateTime = now;
 
-    const camera = this.scene.getObjectByName('camera') as THREE.Camera;
+    const camera = this.scene.getObjectByName("camera") as THREE.Camera;
     if (!camera) return;
 
-    // Calculate velocity
     const currentTime = now;
     const deltaTime = Math.max((currentTime - this.lastTime) / 1000, 0.001); // Prevent division by zero
     const currentPosition = this.mesh.position.clone();
-    const velocity = currentPosition.clone().sub(this.lastPosition).divideScalar(deltaTime);
-    
-    // Scale factor for velocity influence
-      const velocityScale = 20.0; // Adjusted for better visual effect
-      const scaledVelocity = velocity.multiplyScalar(velocityScale);
-  
-      // Process each edge point
-      for (const point of this.edgePoints) {
-        // Apply current transformation to point
-        const worldPos = point.clone()
-          .applyEuler(this.mesh.rotation)
-          .add(this.mesh.position);
-        
-        // Project to screen space
-        const vector = worldPos.project(camera);
-        
-        // Convert to screen coordinates
-        const screenX = (vector.x + 1) * window.innerWidth / 2;
-        const screenY = (-vector.y + 1) * window.innerHeight / 2;
-  
-        // Only process points that are on screen
-        if (screenX >= 0 && screenX <= window.innerWidth && 
-            screenY >= 0 && screenY <= window.innerHeight) {
-          
-          // Add rotational velocity contribution
-          const rotationalVelocity = new THREE.Vector2(
-            -this.mesh.rotation.z * point.y,
-            this.mesh.rotation.z * point.x
-          ).multiplyScalar(10.0); // Scale rotational effect
-  
-          // Combine translational and rotational velocities
-          const totalVelocityX = scaledVelocity.x + rotationalVelocity.x;
-          const totalVelocityY = scaledVelocity.y + rotationalVelocity.y;
-  
-          this.fluidRef.current.addInput(
-            screenX,
-            screenY,
-            totalVelocityX,
-            totalVelocityY
-          );
-        }
-      }
-  
-      // Update last position and time for next frame
-      this.lastPosition.copy(currentPosition);
-      this.lastTime = currentTime;
-    }
-  }
-  
-  interface GuiCardConstructorParams extends CardConstructorParams {
-    frontTexture?: string;
-    alt: string;
-    onClick?: () => void;
-  }
-  
-  export class GuiCard extends Card {
-    private frontTextureUrl?: string;
-    public alt: string;
-    public onClick?: () => void;
-  
-    constructor(params: GuiCardConstructorParams) {
-      super(params);
-      this.frontTextureUrl = params.frontTexture;
-      this.alt = params.alt;
-      this.onClick = params.onClick;
-  
-      const canvas = document.createElement('canvas');
-      const context = canvas.getContext('2d');
-      canvas.width = 420;
-      canvas.height = 420;
-      
-      if (context) {
-        context.fillStyle = '#000000';
-        context.fillRect(0, 0, canvas.width, canvas.height);
-        context.font = 'bold 48px Arial';
-        context.fillStyle = '#FFFFFF';
-        context.textAlign = 'center';
-        context.textBaseline = 'middle';
-        context.fillText(this.alt, canvas.width / 2, canvas.height / 2);
-      }
-  
-      const defaultTexture = new THREE.CanvasTexture(canvas);
-      
-      const loader = new THREE.TextureLoader();
-      const texture = this.frontTextureUrl
-        ? loader.load(this.frontTextureUrl)
-        : defaultTexture;
-  
-      texture.center.set(0, 0);
-  
-      const frontMaterial = new THREE.MeshPhongMaterial({
-        map: texture,
-        side: THREE.FrontSide,
-        shininess: 0,
-        depthTest: false,
-        polygonOffset: true,
-        polygonOffsetFactor: 1,
-        polygonOffsetUnits: 1
-      });
-  
-      if (Array.isArray((this.mesh).material)) {
-        (this.mesh).material[0] = frontMaterial;
-      }
-  
-      if (this.onClick) {
-        this.hitbox.userData.onClick = this.onClick;
+    const velocity = currentPosition
+      .clone()
+      .sub(this.lastPosition)
+      .divideScalar(deltaTime);
+
+    const velocityScale = 20.0; // Adjusted for better visual effect
+    const scaledVelocity = velocity.multiplyScalar(velocityScale);
+
+    for (const point of this.edgePoints) {
+      const worldPos = point
+        .clone()
+        .applyEuler(this.mesh.rotation)
+        .add(this.mesh.position);
+
+      const vector = worldPos.project(camera);
+
+      // Convert to screen coordinates
+      const screenX = ((vector.x + 1) * window.innerWidth) / 2;
+      const screenY = ((-vector.y + 1) * window.innerHeight) / 2;
+
+      if (
+        screenX >= 0 &&
+        screenX <= window.innerWidth &&
+        screenY >= 0 &&
+        screenY <= window.innerHeight
+      ) {
+        const rotationalVelocity = new THREE.Vector2(
+          -this.mesh.rotation.z * point.y,
+          this.mesh.rotation.z * point.x
+        ).multiplyScalar(10.0); // Scale rotational effect
+
+        const totalVelocityX = scaledVelocity.x + rotationalVelocity.x;
+        const totalVelocityY = scaledVelocity.y + rotationalVelocity.y;
+
+        this.fluidRef.current.addInput(
+          screenX,
+          screenY,
+          totalVelocityX,
+          totalVelocityY
+        );
       }
     }
+
+    // Update last position and time for next frame
+    this.lastPosition.copy(currentPosition);
+    this.lastTime = currentTime;
   }
-  
+}
+
+interface GuiCardConstructorParams extends CardConstructorParams {
+  frontTexture?: string;
+  alt: string;
+  onClick?: () => void;
+}
+
+export class GuiCard extends Card {
+  private frontTextureUrl?: string;
+  public alt: string;
+  public onClick?: () => void;
+
+  constructor(params: GuiCardConstructorParams) {
+    super(params);
+    this.frontTextureUrl = params.frontTexture;
+    this.alt = params.alt;
+    this.onClick = params.onClick;
+
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+    canvas.width = 420;
+    canvas.height = 420;
+
+    if (context) {
+      context.fillStyle = "#000000";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.font = "bold 48px Arial";
+      context.fillStyle = "#FFFFFF";
+      context.textAlign = "center";
+      context.textBaseline = "middle";
+      context.fillText(this.alt, canvas.width / 2, canvas.height / 2);
+    }
+
+    const defaultTexture = new THREE.CanvasTexture(canvas);
+
+    const loader = new THREE.TextureLoader();
+    const texture = this.frontTextureUrl
+      ? loader.load(this.frontTextureUrl)
+      : defaultTexture;
+
+    texture.center.set(0, 0);
+
+    const frontMaterial = new THREE.MeshPhongMaterial({
+      map: texture,
+      side: THREE.FrontSide,
+      shininess: 0,
+      depthTest: false,
+      polygonOffset: true,
+      polygonOffsetFactor: 1,
+      polygonOffsetUnits: 1,
+    });
+
+    if (Array.isArray(this.mesh.material)) {
+      this.mesh.material[0] = frontMaterial;
+    }
+
+    if (this.onClick) {
+      this.hitbox.userData.onClick = this.onClick;
+    }
+  }
+}
