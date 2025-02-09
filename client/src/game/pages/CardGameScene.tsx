@@ -1,29 +1,9 @@
 import React, { useEffect, useRef } from "react";
 import * as THREE from "three";
 import gsap from "gsap";
-import { Hand } from "./components/Hand";
+import { Hand } from "../components/Hand";
 
-interface SceneRefs {
-  scene: THREE.Scene;
-  camera: THREE.PerspectiveCamera;
-  renderer: THREE.WebGLRenderer;
-}
-
-interface Props {
-  numCards?: number;
-}
-
-interface Card {
-  hitbox: THREE.Object3D;
-  mesh: THREE.Mesh;
-  isHovered: boolean;
-  hover: () => void;
-  unhover: () => void;
-  resetPosition: () => void;
-  startDrag: (position: THREE.Vector3) => void;
-  drag: (position: THREE.Vector3) => void;
-  endDrag: () => void;
-}
+import type { SceneRefs, Props, Card } from "../types";
 
 const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
   const mountRef = useRef<HTMLDivElement>(null);
