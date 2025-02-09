@@ -289,16 +289,17 @@ export class Card {
       duration: 0.4,
       ease: "back.out(1.7)",
       onUpdate: () => this.updateFluidBackground(),
-    }).to(
-      this.mesh.rotation,
-      {
-        x: -Math.PI * 0.1,
-        duration: 0.3,
-        ease: "power2.out",
-        onUpdate: () => this.updateFluidBackground(),
-      },
-      "-=0.2"
-    );
+    });
+    // .to(
+    //   this.mesh.rotation,
+    //   {
+    //     x: -Math.PI * 0.1,
+    //     duration: 0.3,
+    //     ease: "power2.out",
+    //     onUpdate: () => this.updateFluidBackground(),
+    //   },
+    //   "-=0.2"
+    // );
 
     this.currentTween = tl;
   }
