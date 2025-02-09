@@ -52,6 +52,7 @@ const ScenePage: React.FC = () => {
         onClick: () => {},
         position: new THREE.Vector3(1, 0, 0),
         rotation: new THREE.Euler(0, 0, 0),
+        fluidRef: fluidRef as React.RefObject<FluidBackgroundHandle>,
       }),
     ];
 
