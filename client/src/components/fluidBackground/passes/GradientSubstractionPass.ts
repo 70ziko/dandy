@@ -40,16 +40,17 @@ export class GradientSubstractionPass {
               gl_Position = vec4(position, 0.0, 1.0);
             }`,
       fragmentShader: `
+            #extension GL_OES_standard_derivatives : enable
             precision highp float;
             precision highp int;
             varying vec2 vUV;
             uniform float timeDelta;
             uniform sampler2D velocity;
             uniform sampler2D pressure;
-
+    
             void main() {
               vec2 texelSize = vec2(dFdx(vUV.x), dFdy(vUV.y));
-
+    
               float x0 = texture2D(pressure, vUV - vec2(texelSize.x, 0)).r;
               float x1 = texture2D(pressure, vUV + vec2(texelSize.x, 0)).r;
               float y0 = texture2D(pressure, vUV - vec2(0, texelSize.y)).r;

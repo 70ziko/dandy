@@ -24,18 +24,32 @@ export class RenderTarget {
     this.index = 0;
     this.buffers = [
       {
-        target: new WebGLRenderTarget(resolution.x, resolution.y, {
-          format,
-          type: type as TextureDataType,
-          depthBuffer: false,
-          stencilBuffer: false,
-        }),
+        target: (() => {
+          const rt = new WebGLRenderTarget(resolution.x, resolution.y, {
+            format,
+            type: type as TextureDataType,
+            depthBuffer: false,
+            stencilBuffer: false,
+          });
+          // For 3D textures, disable flipY and premultiplyAlpha (as required by WebGL specs).
+          // THREE.Data3DTexture is imported from "three".
+          if (type === (rt.texture.constructor as any).Data3DTexture) {
+            rt.texture.flipY = false;
+            rt.texture.premultiplyAlpha = false;
+          }
+          return rt;
+        })(),
         needsResize: false,
       },
     ];
     for (let i = 1; i < nBuffers; ++i) {
+      const clonedTarget = this.buffers[0].target.clone();
+      if (type === (clonedTarget.texture.constructor as any).Data3DTexture) {
+        clonedTarget.texture.flipY = false;
+        clonedTarget.texture.premultiplyAlpha = false;
+      }
       this.buffers[i] = {
-        target: this.buffers[0].target.clone(),
+        target: clonedTarget,
         needsResize: false,
       };
     }

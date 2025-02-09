@@ -41,6 +41,7 @@ export class JacobiIterationsPass {
               gl_Position = vec4(position, 0.0, 1.0);
             }`,
       fragmentShader: `
+            #extension GL_OES_standard_derivatives : enable
             precision highp float;
             precision highp int;
             varying vec2 vUV;
@@ -57,12 +58,11 @@ export class JacobiIterationsPass {
               vec4 y0 = texture2D(previousIteration, vUV - vec2(0, texelSize.y));
               vec4 y1 = texture2D(previousIteration, vUV + vec2(0, texelSize.y));
               vec4 d = texture2D(divergence, vUV);
-
+    
               gl_FragColor = (x0 + x1 + y0 + y1 + alpha * d) * beta;
             }`,
       depthTest: false,
-      depthWrite: false,
-      // extensions: { derivatives: true }
+      depthWrite: false
     });
     this.mesh = new Mesh(geometry, this.material);
     this.mesh.frustumCulled = false; // Just here to silence a console error.
