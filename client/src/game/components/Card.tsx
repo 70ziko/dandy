@@ -190,7 +190,7 @@ export class Card {
     const width = 1;
     const height = 2;
     const geometry = new THREE.PlaneGeometry(width, height);
-    const material = new THREE.MeshBasicMaterial({
+    const material = new THREE.MeshPhongMaterial({
       transparent: true,
       opacity: 0,
       side: THREE.DoubleSide,
@@ -439,25 +439,15 @@ export class Card {
     if (!camera) return;
 
     const currentTime = now;
-    const deltaTime = Math.max((currentTime - this.lastTime) / 1000, 0.001); // Prevent division by zero
+    const deltaTime = Math.max((currentTime - this.lastTime) / 1000, 0.001);
     const currentPosition = this.mesh.position.clone();
-    const velocity = currentPosition
-      .clone()
-      .sub(this.lastPosition)
-      .divideScalar(deltaTime);
-
-    const velocityScale = 20.0; // Adjusted for better visual effect
+    const velocity = currentPosition.clone().sub(this.lastPosition).divideScalar(deltaTime);
+    const velocityScale = 5.0;
     const scaledVelocity = velocity.multiplyScalar(velocityScale);
 
     for (const point of this.edgePoints) {
-      const worldPos = point
-        .clone()
-        .applyEuler(this.mesh.rotation)
-        .add(this.mesh.position);
-
+      const worldPos = point.clone().applyEuler(this.mesh.rotation).add(this.mesh.position);
       const vector = worldPos.project(camera);
-
-      // Convert to screen coordinates
       const screenX = ((vector.x + 1) * window.innerWidth) / 2;
       const screenY = ((-vector.y + 1) * window.innerHeight) / 2;
 
@@ -470,21 +460,22 @@ export class Card {
         const rotationalVelocity = new THREE.Vector2(
           -this.mesh.rotation.z * point.y,
           this.mesh.rotation.z * point.x
-        ).multiplyScalar(10.0); // Scale rotational effect
-
+        ).multiplyScalar(1.0);
         const totalVelocityX = scaledVelocity.x + rotationalVelocity.x;
         const totalVelocityY = scaledVelocity.y + rotationalVelocity.y;
-
-        this.fluidRef.current.addInput(
-          screenX,
-          screenY,
-          totalVelocityX,
-          totalVelocityY
-        );
+        
+        // Original: addInput
+        this.fluidRef.current.addInput(screenX, screenY, totalVelocityX, totalVelocityY);
+        
+        // New: addCardInput including the card's texture
+        const frontMat = Array.isArray(this.mesh.material)
+          ? this.mesh.material[0] as THREE.MeshPhongMaterial
+          : this.mesh.material as THREE.MeshPhongMaterial;
+        const frontTexture = frontMat.map;
+        this.fluidRef.current.addCardInput(screenX, screenY, totalVelocityX, totalVelocityY, frontTexture);
       }
     }
 
-    // Update last position and time for next frame
     this.lastPosition.copy(currentPosition);
     this.lastTime = currentTime;
   }

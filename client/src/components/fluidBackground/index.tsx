@@ -17,6 +17,7 @@ import {
 } from "three";
 import { AdvectionPass } from "./passes/AdvectionPass";
 import { BoundaryPass } from "./passes/BoundaryPass";
+import { CardTexturePass } from "./passes/CardTexturePass";
 import { ColorInitPass } from "./passes/ColorInitPass";
 import { CompositionPass } from "./passes/CompositionPass";
 import { DivergencePass } from "./passes/DivergencePass";
@@ -44,11 +45,19 @@ export interface FluidBackgroundHandle {
     velocityX?: number,
     velocityY?: number
   ) => void;
+  addCardInput: (
+    x: number,
+    y: number,
+    velocityX?: number,
+    velocityY?: number,
+    texture?: any
+  ) => void;
 }
 
 const FluidBackground = forwardRef<FluidBackgroundHandle>((_, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const inputTouchesRef = useRef<{ id: string | number; input: Vector4 }[]>([]);
+  const cardInputTouchesRef = useRef<{ id: string | number; input: Vector4; texture: any }[]>([]);
   const aspectRef = useRef(new Vector2(1, 1));
 
   useImperativeHandle(ref, () => ({
@@ -76,6 +85,24 @@ const FluidBackground = forwardRef<FluidBackgroundHandle>((_, ref) => {
       } else {
         const touch = inputTouchesRef.current[0].input;
         touch.setX(relX).setY(relY).setZ(relVelX).setW(relVelY);
+      }
+    },
+    addCardInput: (x, y, velocityX = 0, velocityY = 0, texture: any) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const relX = (x / canvas.clientWidth) * aspectRef.current.x;
+      const relY = 1.0 - y / canvas.clientHeight;
+      const relVelX = (velocityX / canvas.clientWidth) * aspectRef.current.x;
+      const relVelY = -(velocityY / canvas.clientHeight);
+      if (cardInputTouchesRef.current.length === 0) {
+        cardInputTouchesRef.current.push({
+          id: "card-external",
+          input: new Vector4(relX, relY, relVelX, relVelY),
+          texture: texture,
+        });
+      } else {
+        cardInputTouchesRef.current[0].input.set(relX, relY, relVelX, relVelY);
+        cardInputTouchesRef.current[0].texture = texture;
       }
     },
   }));
@@ -177,6 +204,7 @@ const FluidBackground = forwardRef<FluidBackgroundHandle>((_, ref) => {
     const pressurePass = new JacobiIterationsPass();
     const pressureSubstractionPass = new GradientSubstractionPass();
     const compositionPass = new CompositionPass();
+    const cardTexturePass = new CardTexturePass(resolution, configuration.Radius);
 
     const textureLoader = new TextureLoader().setPath("./resources/");
     loadGradients(textureLoader);
@@ -196,6 +224,7 @@ const FluidBackground = forwardRef<FluidBackgroundHandle>((_, ref) => {
       aspectRef.current = aspect;
       touchForceAdditionPass.update({ aspect });
       touchColorAdditionPass.update({ aspect });
+      cardTexturePass.update({ aspect });
     };
     window.addEventListener("resize", handleResize);
 
@@ -226,6 +255,18 @@ const FluidBackground = forwardRef<FluidBackgroundHandle>((_, ref) => {
             c = colorRT.set(renderer);
             renderer.render(touchColorAdditionPass.scene, camera);
           }
+        }
+
+        // Add card texture processing
+        if (cardInputTouchesRef.current.length > 0) {
+          cardTexturePass.update({
+            touches: cardInputTouchesRef.current,
+            radius: configuration.Radius,
+            velocity: v,
+            cardTexture: cardInputTouchesRef.current[0].texture,
+          });
+          v = velocityRT.set(renderer);
+          renderer.render(cardTexturePass.scene, camera);
         }
 
         // Apply velocity boundaries.
