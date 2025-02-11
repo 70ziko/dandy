@@ -468,13 +468,20 @@ export class Card {
         this.fluidRef.current.addInput(screenX, screenY, totalVelocityX, totalVelocityY);
         
         // New: addCardInput including the card's texture
-        const frontMat = Array.isArray(this.mesh.material)
-          ? this.mesh.material[0] as THREE.MeshPhongMaterial
-          : this.mesh.material as THREE.MeshPhongMaterial;
-        const frontTexture = frontMat.map;
-        this.fluidRef.current.addCardInput(screenX, screenY, totalVelocityX, totalVelocityY, frontTexture);
+        // const frontMat = Array.isArray(this.mesh.material)
+        //   ? this.mesh.material[0] as THREE.MeshPhongMaterial
+        //   : this.mesh.material as THREE.MeshPhongMaterial;
+        // const frontTexture = frontMat.map;
+        // if (frontTexture) {
+        //   this.fluidRef.current.addCardInput(screenX, screenY, totalVelocityX, totalVelocityY, frontTexture);
+        // } else {
+          const textureLoader = new THREE.TextureLoader();
+          const brushTexture = textureLoader.load("/assets/brush.png");
+          this.fluidRef.current.addCardInput(screenX, screenY, totalVelocityX, totalVelocityY, brushTexture);
+        // }
       }
     }
+    console.log("Added card input:", this.fluidRef.current);
 
     this.lastPosition.copy(currentPosition);
     this.lastTime = currentTime;

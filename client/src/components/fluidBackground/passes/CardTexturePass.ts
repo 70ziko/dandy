@@ -1,41 +1,34 @@
 import {
-    BufferAttribute,
-    BufferGeometry,
-    Mesh,
-    RawShaderMaterial,
-    Scene,
-    Texture,
-    Uniform,
-    Vector2,
-    Vector4,
-    } from "three";
-    
-    const MAX_CARDS = 10;
-    
-    export class CardTexturePass {
-    public readonly scene: Scene;
-    private material: RawShaderMaterial;
-    private mesh: Mesh;
-    
-    constructor(readonly resolution: Vector2, readonly radius: number) {
+  BufferAttribute,
+  BufferGeometry,
+  Mesh,
+  RawShaderMaterial,
+  Scene,
+  Texture,
+  Uniform,
+  Vector2,
+  Vector4,
+} from "three";
+
+const MAX_CARDS = 10;
+
+export class CardTexturePass {
+  public readonly scene: Scene;
+  private material: RawShaderMaterial;
+  private mesh: Mesh;
+
+  constructor(readonly resolution: Vector2, readonly radius: number) {
     this.scene = new Scene();
-    
+
     const geometry = new BufferGeometry();
     geometry.setAttribute(
       "position",
       new BufferAttribute(
-        new Float32Array([
-          -1, -1,
-           1, -1,
-           1,  1,
-           1,  1,
-          -1,  1,
-          -1, -1,
-        ]),
+        new Float32Array([-1, -1, 1, -1, 1, 1, 1, 1, -1, 1, -1, -1]),
         2
       )
     );
-    
+
     const uniforms: { [key: string]: Uniform } = {
       aspect: new Uniform(new Vector2(resolution.x / resolution.y, 1.0)),
       radius: new Uniform(radius),
@@ -45,7 +38,7 @@ import {
     for (let i = 0; i < MAX_CARDS; i++) {
       uniforms["input" + i] = new Uniform(new Vector4());
     }
-    
+
     this.material = new RawShaderMaterial({
       uniforms,
       vertexShader: `
@@ -109,33 +102,33 @@ import {
       depthTest: false,
       depthWrite: false,
     });
-    
+
     this.mesh = new Mesh(geometry, this.material);
     this.mesh.frustumCulled = false;
     this.scene.add(this.mesh);
-    }
-    
-    public update(uniforms: any): void {
+  }
+
+  public update(uniforms: any): void {
     if (uniforms.aspect !== undefined) {
-    this.material.uniforms.aspect.value = uniforms.aspect;
+      this.material.uniforms.aspect.value = uniforms.aspect;
     }
     if (uniforms.touches !== undefined) {
-    const touchMax = Math.min(MAX_CARDS, uniforms.touches.length);
-    for (let i = 0; i < touchMax; i++) {
-    this.material.uniforms["input" + i].value = uniforms.touches[i].input;
-    }
-    for (let i = uniforms.touches.length; i < MAX_CARDS; i++) {
-    this.material.uniforms["input" + i].value.set(0, 0, 0, 0);
-    }
+      const touchMax = Math.min(MAX_CARDS, uniforms.touches.length);
+      for (let i = 0; i < touchMax; i++) {
+        this.material.uniforms["input" + i].value = uniforms.touches[i].input;
+      }
+      for (let i = uniforms.touches.length; i < MAX_CARDS; i++) {
+        this.material.uniforms["input" + i].value.set(0, 0, 0, 0);
+      }
     }
     if (uniforms.radius !== undefined) {
-    this.material.uniforms.radius.value = uniforms.radius;
+      this.material.uniforms.radius.value = uniforms.radius;
     }
     if (uniforms.velocity !== undefined) {
-    this.material.uniforms.velocity.value = uniforms.velocity;
+      this.material.uniforms.velocity.value = uniforms.velocity;
     }
     if (uniforms.cardTexture !== undefined) {
-    this.material.uniforms.cardTexture.value = uniforms.cardTexture;
+      this.material.uniforms.cardTexture.value = uniforms.cardTexture;
     }
-    }
-    }
+  }
+}
