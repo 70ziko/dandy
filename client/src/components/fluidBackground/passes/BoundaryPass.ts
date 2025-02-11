@@ -38,6 +38,7 @@ export class BoundaryPass {
           gl_Position = vec4(position, 0.0, 1.0);
         }`,
       fragmentShader: `
+        #extension GL_OES_standard_derivatives : enable
         precision highp float;
         precision highp int;
         varying vec2 vUV;

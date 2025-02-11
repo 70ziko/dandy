@@ -58,11 +58,12 @@ export class JacobiIterationsPass {
               vec4 y0 = texture2D(previousIteration, vUV - vec2(0, texelSize.y));
               vec4 y1 = texture2D(previousIteration, vUV + vec2(0, texelSize.y));
               vec4 d = texture2D(divergence, vUV);
-    
+
               gl_FragColor = (x0 + x1 + y0 + y1 + alpha * d) * beta;
             }`,
       depthTest: false,
-      depthWrite: false
+      depthWrite: false,
+      // extensions: { derivatives: true }
     });
     this.mesh = new Mesh(geometry, this.material);
     this.mesh.frustumCulled = false; // Just here to silence a console error.

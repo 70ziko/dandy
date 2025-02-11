@@ -15,8 +15,8 @@ import {
 } from "three";
 
 export class ColorInitPass {
-  private readonly scene: Scene;
-  private readonly camera: OrthographicCamera;
+  public readonly scene: Scene;
+  public readonly camera: OrthographicCamera;
 
   private material: RawShaderMaterial;
   private mesh: Mesh;

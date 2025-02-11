@@ -47,10 +47,10 @@ export class GradientSubstractionPass {
             uniform float timeDelta;
             uniform sampler2D velocity;
             uniform sampler2D pressure;
-    
+
             void main() {
               vec2 texelSize = vec2(dFdx(vUV.x), dFdy(vUV.y));
-    
+
               float x0 = texture2D(pressure, vUV - vec2(texelSize.x, 0)).r;
               float x1 = texture2D(pressure, vUV + vec2(texelSize.x, 0)).r;
               float y0 = texture2D(pressure, vUV - vec2(0, texelSize.y)).r;
