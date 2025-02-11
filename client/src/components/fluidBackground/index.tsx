@@ -14,6 +14,7 @@ import {
   Vector2,
   Vector4,
   WebGLRenderer,
+  Texture,
 } from "three";
 import { AdvectionPass } from "./passes/AdvectionPass";
 import { BoundaryPass } from "./passes/BoundaryPass";
@@ -29,15 +30,17 @@ import { VelocityInitPass } from "./passes/VelocityInitPass";
 import { RenderTarget } from "./RenderTarget";
 
 const gradients: string[] = ["gradient.jpg"];
-const gradientTextures: any[] = [];
-function loadGradients(textureLoader: TextureLoader) {
+const gradientTextures: Texture[] = [];
+
+function loadGradients() {
+  const textureLoader = new TextureLoader().setPath("./resources/");
   for (let i = 0; i < gradients.length; ++i) {
-    textureLoader.load(gradients[i], (texture) => {
+    textureLoader.load(gradients[i], (texture: Texture) => {
       gradientTextures[i] = texture;
     });
   }
 }
-
+loadGradients();
 export interface FluidBackgroundHandle {
   addInput: (
     x: number,
@@ -115,12 +118,12 @@ const FluidBackground = forwardRef<FluidBackgroundHandle>((_, ref) => {
       Simulate: true,
       Iterations: 32,
       Radius: 0.5,
-      Scale: 0.15,
+      Scale: 0.5,
       ColorDecay: 0.01,
       Boundaries: true,
       AddColor: true,
       Visualize: "Color",
-      Mode: "Spectral",
+      Mode: "Normal",
       Timestep: "1/60",
       Reset: () => {
         velocityAdvectionPass.update({
@@ -175,7 +178,7 @@ const FluidBackground = forwardRef<FluidBackgroundHandle>((_, ref) => {
       UnsignedByteType
     );
 
-    let v: any, c: any, d: any, p: any;
+    let v: Texture | undefined, c: Texture | undefined, d: Texture, p: Texture;
 
     const velocityInitPass = new VelocityInitPass(renderer, resolution);
     const velocityInitTexture = velocityInitPass.render();
@@ -206,8 +209,8 @@ const FluidBackground = forwardRef<FluidBackgroundHandle>((_, ref) => {
     const compositionPass = new CompositionPass();
     const cardTexturePass = new CardTexturePass(resolution, configuration.Radius);
 
-    const textureLoader = new TextureLoader().setPath("./resources/");
-    loadGradients(textureLoader);
+    // const textureLoader = new TextureLoader().setPath("./resources/");
+    // loadGradients(textureLoader);
 
     const handleResize = () => {
       renderer.setSize(window.innerWidth, window.innerHeight);

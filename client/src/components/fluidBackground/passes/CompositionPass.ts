@@ -5,7 +5,7 @@ import {
   RawShaderMaterial,
   Scene,
   Texture,
-  Uniform
+  Uniform,
 } from "three";
 
 export class CompositionPass {
@@ -28,10 +28,10 @@ export class CompositionPass {
     this.material = new RawShaderMaterial({
       uniforms: {
         colorBuffer: new Uniform(Texture.DEFAULT_IMAGE),
-        gradient: new Uniform(Texture.DEFAULT_IMAGE)
+        gradient: new Uniform(Texture.DEFAULT_IMAGE),
       },
       defines: {
-        MODE: 0
+        MODE: 0,
       },
       vertexShader: `
           attribute vec2 position;
@@ -87,7 +87,7 @@ export class CompositionPass {
           }`,
       depthTest: false,
       depthWrite: false,
-      transparent: true
+      transparent: true,
     });
     this.mesh = new Mesh(geometry, this.material);
     this.mesh.frustumCulled = false; // Just here to silence a console error.
