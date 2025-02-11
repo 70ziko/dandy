@@ -40,6 +40,7 @@ function loadGradients() {
     });
   }
 }
+
 loadGradients();
 export interface FluidBackgroundHandle {
   addInput: (
@@ -119,7 +120,7 @@ const FluidBackground = forwardRef<FluidBackgroundHandle>((_, ref) => {
       Iterations: 32,
       Radius: 0.5,
       Scale: 0.5,
-      ColorDecay: 0.01,
+      ColorDecay: 0.04,
       Boundaries: true,
       AddColor: true,
       Visualize: "Color",

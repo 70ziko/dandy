@@ -41,7 +41,7 @@ const MenuScenePage: React.FC = () => {
         onClick: () => {
           navigate("/game");
         },
-        position: new THREE.Vector3(-1, 0, 0),
+        position: new THREE.Vector3(-1, -0.5, 0),
         rotation: new THREE.Euler(0, 0, 0),
         fluidRef: fluidRef as React.RefObject<FluidBackgroundHandle>,
       }),
@@ -49,7 +49,7 @@ const MenuScenePage: React.FC = () => {
         scene,
         alt: "Private Rooms",
         onClick: () => {},
-        position: new THREE.Vector3(1, 0, 0),
+        position: new THREE.Vector3(1, -0.5, 0),
         rotation: new THREE.Euler(0, 0, 0),
         fluidRef: fluidRef as React.RefObject<FluidBackgroundHandle>,
       }),

@@ -481,8 +481,6 @@ export class Card {
         // }
       }
     }
-    console.log("Added card input:", this.fluidRef.current);
-
     this.lastPosition.copy(currentPosition);
     this.lastTime = currentTime;
   }
