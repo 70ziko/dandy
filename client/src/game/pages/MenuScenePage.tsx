@@ -1,6 +1,9 @@
 import React, { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import * as THREE from "three";
+import { gsap } from "gsap";
+import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
+import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry";
 import FluidBackground, {
   FluidBackgroundHandle,
 } from "components/fluidBackground";
@@ -54,7 +57,29 @@ const MenuScenePage: React.FC = () => {
         fluidRef: fluidRef as React.RefObject<FluidBackgroundHandle>,
       }),
     ];
-
+    // Animate cards into position
+    // menuCards.forEach((card, index) => {
+    //   gsap.to(card.getMeshPosition(), { y: -1.5, duration: 1.5, delay: 0.5 + index * 0.2, ease: "power2.out" });
+    // });
+    
+    // Add 3D text "DANDY"
+    const fontLoader = new FontLoader();
+    fontLoader.load("https://threejs.org/examples/fonts/helvetiker_regular.typeface.json", (font) => {
+      const textGeometry = new TextGeometry("DANDY", {
+        font,
+        size: 0.5,
+        // height: 0.2,
+        curveSegments: 2,
+        bevelEnabled: false,
+      });
+      const textMaterial = new THREE.MeshPhongMaterial({ color: 0xFFFFFF });
+      const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+      textMesh.position.set(-1, 1, 0);
+      scene.add(textMesh);
+      gsap.to(textMesh.position, { y: 1.5, duration: 1.5, ease: "power2.out" });
+      gsap.to(textMesh.position, { y: "+=0.2", duration: 2, repeat: -1, yoyo: true, ease: "sine.inOut" });
+    });
+    
     let draggedCard: GuiCard | null = null;
 
     const light = new THREE.AmbientLight(0xffffff, 1);
