@@ -1,10 +1,4 @@
-import {
-  Texture,
-  Vector2,
-  WebGLRenderer,
-  WebGLRenderTarget,
-  TextureDataType,
-} from "three";
+import { Texture, Vector2, WebGLRenderer, WebGLRenderTarget, TextureDataType } from "three";
 
 interface IBuffer {
   target: WebGLRenderTarget;
@@ -19,38 +13,24 @@ export class RenderTarget {
     readonly resolution: Vector2,
     readonly nBuffers: number,
     readonly format: number,
-    readonly type: number
+    readonly type: TextureDataType
   ) {
     this.index = 0;
     this.buffers = [
       {
-        target: (() => {
-          const rt = new WebGLRenderTarget(resolution.x, resolution.y, {
-            format,
-            type: type as TextureDataType,
-            depthBuffer: false,
-            stencilBuffer: false,
-          });
-          // For 3D textures, disable flipY and premultiplyAlpha (as required by WebGL specs).
-          // THREE.Data3DTexture is imported from "three".
-          if (type === (rt.texture.constructor as any).Data3DTexture) {
-            rt.texture.flipY = false;
-            rt.texture.premultiplyAlpha = false;
-          }
-          return rt;
-        })(),
-        needsResize: false,
-      },
+        target: new WebGLRenderTarget(resolution.x, resolution.y, {
+          format,
+          type,
+          depthBuffer: false,
+          stencilBuffer: false
+        }),
+        needsResize: false
+      }
     ];
     for (let i = 1; i < nBuffers; ++i) {
-      const clonedTarget = this.buffers[0].target.clone();
-      if (type === (clonedTarget.texture.constructor as any).Data3DTexture) {
-        clonedTarget.texture.flipY = false;
-        clonedTarget.texture.premultiplyAlpha = false;
-      }
       this.buffers[i] = {
-        target: clonedTarget,
-        needsResize: false,
+        target: this.buffers[0].target.clone(),
+        needsResize: false
       };
     }
   }
