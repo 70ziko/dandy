@@ -442,14 +442,14 @@ export class Card {
     const deltaTime = Math.max((currentTime - this.lastTime) / 1000, 0.001);
     const currentPosition = this.mesh.position.clone();
     const velocity = currentPosition.clone().sub(this.lastPosition).divideScalar(deltaTime);
-    const velocityScale = 5.0;
+    const velocityScale = -1.0;
     const scaledVelocity = velocity.multiplyScalar(velocityScale);
 
     for (const point of this.edgePoints) {
       const worldPos = point.clone().applyEuler(this.mesh.rotation).add(this.mesh.position);
       const vector = worldPos.project(camera);
-      const screenX = ((vector.x + 1) * window.innerWidth) / 2;
-      const screenY = ((-vector.y + 1) * window.innerHeight) / 2;
+      const screenX = ((vector.x + 1.1) * window.innerWidth) / 2;
+      const screenY = ((-vector.y + 0.9) * window.innerHeight) / 2;
 
       if (
         screenX >= 0 &&
@@ -476,7 +476,7 @@ export class Card {
         //   this.fluidRef.current.addCardInput(screenX, screenY, totalVelocityX, totalVelocityY, frontTexture);
         // } else {
           const textureLoader = new THREE.TextureLoader();
-          const brushTexture = textureLoader.load("/assets/brush.png");
+          const brushTexture = textureLoader.load("/assets/square_brush.png");
           this.fluidRef.current.addCardInput(screenX, screenY, totalVelocityX, totalVelocityY, brushTexture);
         // }
       }

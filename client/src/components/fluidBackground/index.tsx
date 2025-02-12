@@ -118,9 +118,9 @@ const FluidBackground = forwardRef<FluidBackgroundHandle>((_, ref) => {
     const configuration = {
       Simulate: true,
       Iterations: 32,
-      Radius: 0.5,
-      Scale: 0.5,
-      ColorDecay: 0.04,
+      Radius: 0.75,
+      Scale: 0.25,
+      ColorDecay: 0.017,
       Boundaries: true,
       AddColor: true,
       Visualize: "Color",
