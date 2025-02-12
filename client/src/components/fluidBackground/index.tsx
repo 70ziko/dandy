@@ -119,8 +119,8 @@ const FluidBackground = forwardRef<FluidBackgroundHandle>((_, ref) => {
       Simulate: true,
       Iterations: 32,
       Radius: 0.75,
-      Scale: 0.25,
-      ColorDecay: 0.017,
+      Scale: 0.75,
+      ColorDecay: 0.04,
       Boundaries: true,
       AddColor: true,
       Visualize: "Color",
@@ -205,6 +205,9 @@ const FluidBackground = forwardRef<FluidBackgroundHandle>((_, ref) => {
     );
     const velocityBoundary = new BoundaryPass();
     const velocityDivergencePass = new DivergencePass();
+    velocityDivergencePass.material.uniforms.texelSize = { 
+      value: new Vector2(1.0 / resolution.x, 1.0 / resolution.y) 
+    };
     const pressurePass = new JacobiIterationsPass();
     const pressureSubstractionPass = new GradientSubstractionPass();
     const compositionPass = new CompositionPass();
@@ -229,6 +232,8 @@ const FluidBackground = forwardRef<FluidBackgroundHandle>((_, ref) => {
       touchForceAdditionPass.update({ aspect });
       touchColorAdditionPass.update({ aspect });
       cardTexturePass.update({ aspect });
+      const texelSize = new Vector2(1.0 / resolution.x, 1.0 / resolution.y);
+      velocityDivergencePass.material.uniforms.texelSize.value.copy(texelSize);
     };
     window.addEventListener("resize", handleResize);
 

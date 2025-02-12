@@ -5,13 +5,14 @@ import {
   RawShaderMaterial,
   Scene,
   Texture,
-  Uniform
+  Uniform,
+  Vector2
 } from "three";
 
 export class DivergencePass {
   public readonly scene: Scene;
 
-  private material: RawShaderMaterial;
+  public material: RawShaderMaterial;
   private mesh: Mesh;
 
   constructor() {
@@ -28,7 +29,8 @@ export class DivergencePass {
     this.material = new RawShaderMaterial({
       uniforms: {
         timeDelta: new Uniform(0.0),
-        velocity: new Uniform(Texture.DEFAULT_IMAGE)
+        velocity: new Uniform(Texture.DEFAULT_IMAGE),
+        texelSize: new Uniform(new Vector2(0.0, 0.0))
       },
       vertexShader: `
           attribute vec2 position;
@@ -39,16 +41,14 @@ export class DivergencePass {
             gl_Position = vec4(position, 0.0, 1.0);
           }`,
       fragmentShader: `
-          #extension GL_OES_standard_derivatives : enable
           precision highp float;
           precision highp int;
           varying vec2 vUV;
           uniform float timeDelta;
           uniform sampler2D velocity;
+          uniform vec2 texelSize;
          
           void main() {
-            vec2 texelSize = vec2(dFdx(vUV.x), dFdy(vUV.y));
-            
             float x0 = texture2D(velocity, vUV - vec2(texelSize.x, 0)).x;
             float x1 = texture2D(velocity, vUV + vec2(texelSize.x, 0)).x;
             float y0 = texture2D(velocity, vUV - vec2(0, texelSize.y)).y;

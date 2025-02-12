@@ -5,7 +5,8 @@ import {
   RawShaderMaterial,
   Scene,
   Texture,
-  Uniform
+  Uniform,
+  Vector2
 } from "three";
 
 export class JacobiIterationsPass {
@@ -30,7 +31,8 @@ export class JacobiIterationsPass {
         alpha: new Uniform(-1.0), // TODO: Configure this parameters accordingly!
         beta: new Uniform(0.25),
         previousIteration: new Uniform(Texture.DEFAULT_IMAGE),
-        divergence: new Uniform(Texture.DEFAULT_IMAGE)
+        divergence: new Uniform(Texture.DEFAULT_IMAGE),
+        texelSize: new Uniform(new Vector2(0.0, 0.0))
       },
       vertexShader: `
             attribute vec2 position;
@@ -41,7 +43,6 @@ export class JacobiIterationsPass {
               gl_Position = vec4(position, 0.0, 1.0);
             }`,
       fragmentShader: `
-            #extension GL_OES_standard_derivatives : enable
             precision highp float;
             precision highp int;
             varying vec2 vUV;
@@ -49,10 +50,9 @@ export class JacobiIterationsPass {
             uniform float beta;
             uniform sampler2D previousIteration;
             uniform sampler2D divergence;
+            uniform vec2 texelSize;
     
             void main() {
-              vec2 texelSize = vec2(dFdx(vUV.x), dFdy(vUV.y));
-              
               vec4 x0 = texture2D(previousIteration, vUV - vec2(texelSize.x, 0));
               vec4 x1 = texture2D(previousIteration, vUV + vec2(texelSize.x, 0));
               vec4 y0 = texture2D(previousIteration, vUV - vec2(0, texelSize.y));

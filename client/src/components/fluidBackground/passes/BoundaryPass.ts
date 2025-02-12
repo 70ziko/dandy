@@ -6,6 +6,7 @@ import {
   Scene,
   Texture,
   Uniform,
+  Vector2
 } from "three";
 
 export class BoundaryPass {
@@ -27,7 +28,8 @@ export class BoundaryPass {
     );
     this.material = new RawShaderMaterial({
       uniforms: {
-        velocity: new Uniform(Texture.DEFAULT_IMAGE)
+        velocity: new Uniform(Texture.DEFAULT_IMAGE),
+        texelSize: new Uniform(new Vector2(0.0, 0.0))
       },
       vertexShader: `
         attribute vec2 position;
@@ -38,14 +40,13 @@ export class BoundaryPass {
           gl_Position = vec4(position, 0.0, 1.0);
         }`,
       fragmentShader: `
-        #extension GL_OES_standard_derivatives : enable
         precision highp float;
         precision highp int;
         varying vec2 vUV;
         uniform sampler2D velocity;
+        uniform vec2 texelSize;
 
         void main() {
-          vec2 texelSize = vec2(dFdx(vUV.x), dFdy(vUV.y));
 
           float leftEdgeMask = ceil(texelSize.x - vUV.x);
           float bottomEdgeMask = ceil(texelSize.y - vUV.y);
