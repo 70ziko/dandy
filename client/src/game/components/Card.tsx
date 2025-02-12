@@ -439,10 +439,10 @@ export class Card {
     if (!camera) return;
 
     const currentTime = now;
-    const deltaTime = Math.max((currentTime - this.lastTime) / 1000, 0.001);
+    const deltaTime = Math.max((currentTime - this.lastTime) / 1000, 0.01);
     const currentPosition = this.mesh.position.clone();
     const velocity = currentPosition.clone().sub(this.lastPosition).divideScalar(deltaTime);
-    const velocityScale = -1.0;
+    const velocityScale = -0.4;
     const scaledVelocity = velocity.multiplyScalar(velocityScale);
 
     for (const point of this.edgePoints) {
@@ -475,9 +475,9 @@ export class Card {
         // if (frontTexture) {
         //   this.fluidRef.current.addCardInput(screenX, screenY, totalVelocityX, totalVelocityY, frontTexture);
         // } else {
-          const textureLoader = new THREE.TextureLoader();
-          const brushTexture = textureLoader.load("/assets/square_brush.png");
-          this.fluidRef.current.addCardInput(screenX, screenY, totalVelocityX, totalVelocityY, brushTexture);
+          // const textureLoader = new THREE.TextureLoader();
+          // const brushTexture = textureLoader.load("/assets/square_brush.png");
+          // this.fluidRef.current.addCardInput(screenX, screenY, totalVelocityX, totalVelocityY, brushTexture);
         // }
       }
     }

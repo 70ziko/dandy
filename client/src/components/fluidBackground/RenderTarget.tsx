@@ -36,7 +36,7 @@ export class RenderTarget {
   }
 
   public resize(resolution: Vector2): void {
-    resolution.copy(resolution);
+    this.resolution.copy(resolution);
     for (let i = 0; i < this.nBuffers; ++i) {
       this.buffers[i].needsResize = true;
     }

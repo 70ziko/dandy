@@ -68,13 +68,26 @@ const MenuScenePage: React.FC = () => {
       const textGeometry = new TextGeometry("DANDY", {
         font,
         size: 0.5,
-        // height: 0.2,
-        curveSegments: 2,
+        depth: 0.1,
+        curveSegments: 12,
         bevelEnabled: false,
       });
+      
+      // Center the geometry
+      textGeometry.computeBoundingBox();
+      const bbox = textGeometry.boundingBox;
+      if (bbox) {
+        const centerOffset = new THREE.Vector3(
+          -(bbox.max.x - bbox.min.x) / 2,
+          -(bbox.max.y - bbox.min.y) / 2,
+          -(bbox.max.z - bbox.min.z) / 2
+        );
+        textGeometry.translate(centerOffset.x, centerOffset.y, centerOffset.z);
+      }
+      
       const textMaterial = new THREE.MeshPhongMaterial({ color: 0xFFFFFF });
       const textMesh = new THREE.Mesh(textGeometry, textMaterial);
-      textMesh.position.set(-1, 1, 0);
+      textMesh.position.set(0, 2, 0);
       scene.add(textMesh);
       gsap.to(textMesh.position, { y: 1.5, duration: 1.5, ease: "power2.out" });
       gsap.to(textMesh.position, { y: "+=0.2", duration: 2, repeat: -1, yoyo: true, ease: "sine.inOut" });

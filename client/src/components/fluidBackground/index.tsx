@@ -118,8 +118,8 @@ const FluidBackground = forwardRef<FluidBackgroundHandle>((_, ref) => {
     const configuration = {
       Simulate: true,
       Iterations: 32,
-      Radius: 0.75,
-      Scale: 0.75,
+      Radius: 0.8,
+      Scale: 1,
       ColorDecay: 0.04,
       Boundaries: true,
       AddColor: true,
@@ -144,12 +144,17 @@ const FluidBackground = forwardRef<FluidBackgroundHandle>((_, ref) => {
     renderer.autoClear = false;
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
-    const camera = new OrthographicCamera(0, 0, 0, 0, 0, 0);
+    // Ensure minimum dimensions to prevent NaN values
+    const minDimension = 1;
+    const width = Math.max(window.innerWidth, minDimension);
+    const height = Math.max(window.innerHeight, minDimension);
+    
+    const camera = new OrthographicCamera(-1, 1, 1, -1, 0.1, 1000);
     const dt = 1 / 60;
 
     const resolution = new Vector2(
-      configuration.Scale * window.innerWidth,
-      configuration.Scale * window.innerHeight
+      configuration.Scale * width,
+      configuration.Scale * height
     );
     const aspect = new Vector2(resolution.x / resolution.y, 1.0);
     aspectRef.current = aspect;
@@ -217,11 +222,13 @@ const FluidBackground = forwardRef<FluidBackgroundHandle>((_, ref) => {
     // loadGradients(textureLoader);
 
     const handleResize = () => {
-      renderer.setSize(window.innerWidth, window.innerHeight);
+      const width = Math.max(window.innerWidth, minDimension);
+      const height = Math.max(window.innerHeight, minDimension);
+      renderer.setSize(width, height);
       renderer.setPixelRatio(window.devicePixelRatio);
       resolution.set(
-        configuration.Scale * window.innerWidth,
-        configuration.Scale * window.innerHeight
+        configuration.Scale * width,
+        configuration.Scale * height
       );
       velocityRT.resize(resolution);
       divergenceRT.resize(resolution);
