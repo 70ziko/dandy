@@ -137,20 +137,31 @@ const MenuScenePage: React.FC = () => {
     scene.add(light);
     scene.add(camera);
 
-    const updateMousePosition = (event: MouseEvent) => {
+    const updateMousePosition = (event: MouseEvent | TouchEvent) => {
+      let clientX, clientY;
+
+      if (event instanceof MouseEvent) {
+        clientX = event.clientX;
+        clientY = event.clientY;
+      } else {
+        clientX = event.touches[0].clientX;
+        clientY = event.touches[0].clientY;
+      }
+
       const rect = renderer.domElement.getBoundingClientRect();
-      mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-      mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
     };
 
-    const onMouseDown = (event: MouseEvent) => {
+    const handleStart = (event: MouseEvent | TouchEvent) => {
+      event.preventDefault();
       updateMousePosition(event);
       mouseDownTime = performance.now();
       mouseDownPosition.set(mouse.x, mouse.y);
       raycaster.setFromCamera(mouse, camera);
       potentialCard = null;
       const intersects = raycaster.intersectObjects(scene.children, true);
-      // Identify first card hit:
+
       for (const card of menuCards) {
         const hitboxIntersect = intersects.find(
           (intersect) => intersect.object === card.getHitbox()
@@ -162,7 +173,8 @@ const MenuScenePage: React.FC = () => {
       }
     };
 
-    const onMouseMove = (event: MouseEvent) => {
+    const handleMove = (event: MouseEvent | TouchEvent) => {
+      event.preventDefault();
       updateMousePosition(event);
       raycaster.setFromCamera(mouse, camera);
 
@@ -205,8 +217,7 @@ const MenuScenePage: React.FC = () => {
       }
     };
 
-    const onMouseUp = () => {
-      // If still potential (meaning no drag occurred) trigger click:
+    const handleEnd = () => {
       if (potentialCard && !draggedCard) {
         const elapsed = performance.now() - mouseDownTime;
         if (elapsed < timeThreshold && potentialCard.onClick) {
@@ -220,9 +231,19 @@ const MenuScenePage: React.FC = () => {
       }
     };
 
-    renderer.domElement.addEventListener("mousedown", onMouseDown);
-    renderer.domElement.addEventListener("mousemove", onMouseMove);
-    renderer.domElement.addEventListener("mouseup", onMouseUp);
+    renderer.domElement.addEventListener("mousedown", handleStart);
+    renderer.domElement.addEventListener("mousemove", handleMove);
+    renderer.domElement.addEventListener("mouseup", handleEnd);
+
+    renderer.domElement.addEventListener("touchstart", handleStart, {
+      passive: false,
+    });
+    renderer.domElement.addEventListener("touchmove", handleMove, {
+      passive: false,
+    });
+    renderer.domElement.addEventListener("touchend", handleEnd, {
+      passive: false,
+    });
 
     const animate = () => {
       requestAnimationFrame(animate);
@@ -248,9 +269,14 @@ const MenuScenePage: React.FC = () => {
 
     return () => {
       window.removeEventListener("resize", handleResize);
-      renderer.domElement.removeEventListener("mousedown", onMouseDown);
-      renderer.domElement.removeEventListener("mousemove", onMouseMove);
-      renderer.domElement.removeEventListener("mouseup", onMouseUp);
+      renderer.domElement.removeEventListener("mousedown", handleStart);
+      renderer.domElement.removeEventListener("mousemove", handleMove);
+      renderer.domElement.removeEventListener("mouseup", handleEnd);
+
+      renderer.domElement.removeEventListener("touchstart", handleStart);
+      renderer.domElement.removeEventListener("touchmove", handleMove);
+      renderer.domElement.removeEventListener("touchend", handleEnd);
+
       scene.traverse((object) => {
         if (object instanceof THREE.Mesh) {
           if (object.geometry) {

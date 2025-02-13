@@ -165,14 +165,86 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
         }
       };
 
+      const onTouchStart = (event: TouchEvent) => {
+        event.preventDefault();
+        if (!handRef.current || !sceneRef.current) return;
+        const touch = event.touches[0];
+        mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
+        raycaster.setFromCamera(mouse, sceneRef.current.camera);
+        const hitboxes = (handRef.current as any).cards.map(
+          (card: Card) => card.hitbox
+        );
+        const intersects = raycaster.intersectObjects(hitboxes, false);
+        if (intersects.length > 0) {
+          const intersected = intersects[0];
+          const cards = (handRef.current as any).cards;
+          const card = cards.find((c: Card) => c.hitbox === intersected.object);
+          if (card) {
+            draggedCard = card;
+            card.startDrag(intersected.point);
+          }
+        }
+      };
+
+      const onTouchMove = (event: TouchEvent) => {
+        event.preventDefault();
+        if (!handRef.current || !sceneRef.current) return;
+        const touch = event.touches[0];
+        mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
+        if (draggedCard) {
+          raycaster.setFromCamera(mouse, sceneRef.current.camera);
+          const dragPosition = new THREE.Vector3();
+          const distance = draggedCard.mesh.position.distanceTo(
+            sceneRef.current.camera.position
+          );
+          raycaster.ray.at(distance, dragPosition);
+          draggedCard.drag(dragPosition);
+          return;
+        }
+        if (event.timeStamp - lastRaycastTime < 16) return;
+        lastRaycastTime = event.timeStamp;
+        raycaster.setFromCamera(mouse, sceneRef.current.camera);
+        const hitboxes = (handRef.current as any).cards.map(
+          (card: Card) => card.hitbox
+        );
+        const intersects = raycaster.intersectObjects(hitboxes, false);
+        (handRef.current as any).cards.forEach((card: Card) => {
+          const isIntersected = intersects.some(
+            (intersect) => intersect.object === card.hitbox
+          );
+          if (isIntersected && !card.isHovered) {
+            card.hover();
+          } else if (!isIntersected && card.isHovered) {
+            card.unhover();
+            card.resetPosition();
+          }
+        });
+      };
+
+      const onTouchEnd = (event: TouchEvent) => {
+        event.preventDefault();
+        if (draggedCard) {
+          draggedCard.endDrag();
+          draggedCard = null;
+        }
+      };
+
       window.addEventListener("mousemove", onMouseMove);
       window.addEventListener("mousedown", onMouseDown);
       window.addEventListener("mouseup", onMouseUp);
+      window.addEventListener("touchstart", onTouchStart);
+      window.addEventListener("touchmove", onTouchMove);
+      window.addEventListener("touchend", onTouchEnd);
 
       return () => {
         window.removeEventListener("mousemove", onMouseMove);
         window.removeEventListener("mousedown", onMouseDown);
         window.removeEventListener("mouseup", onMouseUp);
+        window.removeEventListener("touchstart", onTouchStart);
+        window.removeEventListener("touchmove", onTouchMove);
+        window.removeEventListener("touchend", onTouchEnd);
       };
     };
 
