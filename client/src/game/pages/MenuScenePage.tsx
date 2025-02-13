@@ -26,11 +26,10 @@ const MenuScenePage: React.FC = () => {
         powerPreference: "high-performance",
         logarithmicDepthBuffer: true,
       });
-      
       renderer.setPixelRatio(window.devicePixelRatio);
       renderer.setClearColor(0x000000, 0);
     } catch (error) {
-      console.error('Failed to initialize WebGL renderer:', error);
+      console.error("Failed to initialize WebGL renderer:", error);
       return;
     }
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -38,12 +37,7 @@ const MenuScenePage: React.FC = () => {
     scene.matrixWorldAutoUpdate = true;
 
     const aspect = window.innerWidth / window.innerHeight;
-    const camera = new THREE.PerspectiveCamera(
-      75,
-      aspect,
-      0.1,
-      1000
-    );
+    const camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
     camera.name = "camera";
     camera.position.set(0, 0, 5);
     camera.updateMatrix();
@@ -51,8 +45,12 @@ const MenuScenePage: React.FC = () => {
 
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
+    let mouseDownTime = 0;
+    const mouseDownPosition = new THREE.Vector2();
+    let potentialCard: GuiCard | null = null;
+    const clickThreshold = 0.02; // threshold in normalized device coordinates
+    const timeThreshold = 200; // milliseconds
 
-    // Initialize menu cards with explicitly constructed vectors and validation
     const menuCards: GuiCard[] = [];
     try {
       menuCards.push(
@@ -72,51 +70,67 @@ const MenuScenePage: React.FC = () => {
         new GuiCard({
           scene,
           alt: "Private Rooms",
-          onClick: () => {},
+          onClick: () => {
+            console.log("Private Rooms clicked");
+          },
           position: new THREE.Vector3(1, -0.5, 0),
           rotation: new THREE.Euler(0, 0, 0),
           fluidRef: fluidRef as React.RefObject<FluidBackgroundHandle>,
         })
       );
     } catch (error) {
-      console.error('Error creating menu cards:', error);
+      console.error("Error creating menu cards:", error);
     }
-    // Animate cards into position
+    // Optionally animate cards into position...
     // menuCards.forEach((card, index) => {
     //   gsap.to(card.getMeshPosition(), { y: -1.5, duration: 1.5, delay: 0.5 + index * 0.2, ease: "power2.out" });
     // });
-    
+
     // Add 3D text "DANDY"
     const fontLoader = new FontLoader();
-    fontLoader.load("https://threejs.org/examples/fonts/helvetiker_regular.typeface.json", (font) => {
-      const textGeometry = new TextGeometry("DANDY", {
-        font,
-        size: 0.5,
-        depth: 0.1,
-        curveSegments: 12,
-        bevelEnabled: false,
-      });
-      
-      // Center the geometry
-      textGeometry.computeBoundingBox();
-      const bbox = textGeometry.boundingBox;
-      if (bbox) {
-        const centerOffset = new THREE.Vector3(
-          -(bbox.max.x - bbox.min.x) / 2,
-          -(bbox.max.y - bbox.min.y) / 2,
-          -(bbox.max.z - bbox.min.z) / 2
-        );
-        textGeometry.translate(centerOffset.x, centerOffset.y, centerOffset.z);
+    fontLoader.load(
+      "https://threejs.org/examples/fonts/helvetiker_regular.typeface.json",
+      (font) => {
+        const textGeometry = new TextGeometry("DANDY", {
+          font,
+          size: 0.5,
+          depth: 0.1,
+          curveSegments: 12,
+          bevelEnabled: false,
+        });
+        textGeometry.computeBoundingBox();
+        const bbox = textGeometry.boundingBox;
+        if (bbox) {
+          const centerOffset = new THREE.Vector3(
+            -(bbox.max.x - bbox.min.x) / 2,
+            -(bbox.max.y - bbox.min.y) / 2,
+            -(bbox.max.z - bbox.min.z) / 2
+          );
+          textGeometry.translate(
+            centerOffset.x,
+            centerOffset.y,
+            centerOffset.z
+          );
+        }
+        const textMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
+        const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+        textMesh.position.set(0, 2, 0);
+        scene.add(textMesh);
+        gsap.to(textMesh.position, {
+          y: 1.5,
+          duration: 1.5,
+          ease: "power2.out",
+        });
+        gsap.to(textMesh.position, {
+          y: "+=0.2",
+          duration: 2,
+          repeat: -1,
+          yoyo: true,
+          ease: "sine.inOut",
+        });
       }
-      
-      const textMaterial = new THREE.MeshPhongMaterial({ color: 0xFFFFFF });
-      const textMesh = new THREE.Mesh(textGeometry, textMaterial);
-      textMesh.position.set(0, 2, 0);
-      scene.add(textMesh);
-      gsap.to(textMesh.position, { y: 1.5, duration: 1.5, ease: "power2.out" });
-      gsap.to(textMesh.position, { y: "+=0.2", duration: 2, repeat: -1, yoyo: true, ease: "sine.inOut" });
-    });
-    
+    );
+
     let draggedCard: GuiCard | null = null;
 
     const light = new THREE.AmbientLight(0xffffff, 1);
@@ -129,9 +143,44 @@ const MenuScenePage: React.FC = () => {
       mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
     };
 
+    const onMouseDown = (event: MouseEvent) => {
+      updateMousePosition(event);
+      mouseDownTime = performance.now();
+      mouseDownPosition.set(mouse.x, mouse.y);
+      raycaster.setFromCamera(mouse, camera);
+      potentialCard = null;
+      const intersects = raycaster.intersectObjects(scene.children, true);
+      // Identify first card hit:
+      for (const card of menuCards) {
+        const hitboxIntersect = intersects.find(
+          (intersect) => intersect.object === card.getHitbox()
+        );
+        if (hitboxIntersect) {
+          potentialCard = card;
+          break;
+        }
+      }
+    };
+
     const onMouseMove = (event: MouseEvent) => {
       updateMousePosition(event);
       raycaster.setFromCamera(mouse, camera);
+
+      if (potentialCard && !draggedCard) {
+        const dx = mouse.x - mouseDownPosition.x;
+        const dy = mouse.y - mouseDownPosition.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist > clickThreshold) {
+          const intersects = raycaster.intersectObject(
+            potentialCard.getHitbox()
+          );
+          if (intersects.length > 0) {
+            draggedCard = potentialCard;
+            potentialCard.startDrag(intersects[0].point);
+            potentialCard = null;
+          }
+        }
+      }
 
       if (draggedCard) {
         const dragPosition = new THREE.Vector3();
@@ -156,24 +205,15 @@ const MenuScenePage: React.FC = () => {
       }
     };
 
-    const onMouseDown = (event: MouseEvent) => {
-      updateMousePosition(event);
-      raycaster.setFromCamera(mouse, camera);
-
-      const intersects = raycaster.intersectObjects(scene.children, true);
-      for (const card of menuCards) {
-        const hitboxIntersect = intersects.find(
-          (intersect) => intersect.object === card.getHitbox()
-        );
-
-        if (hitboxIntersect) {
-          draggedCard = card;
-          card.startDrag(hitboxIntersect.point);
-        }
-      }
-    };
-
     const onMouseUp = () => {
+      // If still potential (meaning no drag occurred) trigger click:
+      if (potentialCard && !draggedCard) {
+        const elapsed = performance.now() - mouseDownTime;
+        if (elapsed < timeThreshold && potentialCard.onClick) {
+          potentialCard.onClick();
+        }
+        potentialCard = null;
+      }
       if (draggedCard) {
         draggedCard.endDrag();
         draggedCard = null;
@@ -186,40 +226,31 @@ const MenuScenePage: React.FC = () => {
 
     const animate = () => {
       requestAnimationFrame(animate);
-      
       try {
-        // Update matrices before rendering
         scene.updateMatrixWorld();
         camera.updateMatrixWorld();
-        
-        // Render the scene
         renderer.render(scene, camera);
       } catch (error) {
-        console.error('Render error:', error);
+        console.error("Render error:", error);
       }
     };
 
-    // Handle window resize
     const handleResize = () => {
       const width = window.innerWidth;
       const height = window.innerHeight;
-      
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
-      
       renderer.setSize(width, height);
     };
-    
-    window.addEventListener('resize', handleResize);
+
+    window.addEventListener("resize", handleResize);
     animate();
 
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
       renderer.domElement.removeEventListener("mousedown", onMouseDown);
       renderer.domElement.removeEventListener("mousemove", onMouseMove);
       renderer.domElement.removeEventListener("mouseup", onMouseUp);
-      
-      // Properly clean up Three.js resources
       scene.traverse((object) => {
         if (object instanceof THREE.Mesh) {
           if (object.geometry) {
@@ -227,14 +258,13 @@ const MenuScenePage: React.FC = () => {
           }
           if (object.material) {
             if (Array.isArray(object.material)) {
-              object.material.forEach(material => material.dispose());
+              object.material.forEach((material) => material.dispose());
             } else {
               object.material.dispose();
             }
           }
         }
       });
-      
       renderer.dispose();
     };
   }, [navigate]);
