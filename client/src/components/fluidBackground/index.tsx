@@ -61,7 +61,9 @@ export interface FluidBackgroundHandle {
 const FluidBackground = forwardRef<FluidBackgroundHandle>((_, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const inputTouchesRef = useRef<{ id: string | number; input: Vector4 }[]>([]);
-  const cardInputTouchesRef = useRef<{ id: string | number; input: Vector4; texture: any }[]>([]);
+  const cardInputTouchesRef = useRef<
+    { id: string | number; input: Vector4; texture: any }[]
+  >([]);
   const aspectRef = useRef(new Vector2(1, 1));
 
   useImperativeHandle(ref, () => ({
@@ -115,266 +117,277 @@ const FluidBackground = forwardRef<FluidBackgroundHandle>((_, ref) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const configuration = {
-      Simulate: true,
-      Iterations: 32,
-      Radius: 0.8,
-      Scale: 1,
-      ColorDecay: 0.04,
-      Boundaries: true,
-      AddColor: true,
-      Visualize: "Color",
-      Mode: "Normal",
-      Timestep: "1/60",
-      Reset: () => {
-        velocityAdvectionPass.update({
-          inputTexture: velocityInitTexture,
-          velocity: velocityInitTexture,
-        });
-        colorAdvectionPass.update({
-          inputTexture: colorInitTexture,
-          velocity: velocityInitTexture,
-        });
-        v = undefined;
-        c = undefined;
-      },
-    };
+    try {
+      const configuration = {
+        Simulate: true,
+        Iterations: 32,
+        Radius: 0.8,
+        Scale: 1,
+        ColorDecay: 0.04,
+        Boundaries: true,
+        AddColor: true,
+        Visualize: "Color",
+        Mode: "Normal",
+        Timestep: "1/60",
+        Reset: () => {
+          velocityAdvectionPass.update({
+            inputTexture: velocityInitTexture,
+            velocity: velocityInitTexture,
+          });
+          colorAdvectionPass.update({
+            inputTexture: colorInitTexture,
+            velocity: velocityInitTexture,
+          });
+          v = undefined;
+          c = undefined;
+        },
+      };
 
-    const renderer = new WebGLRenderer({ canvas });
-    renderer.autoClear = false;
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
-    // Ensure minimum dimensions to prevent NaN values
-    const minDimension = 1;
-    const width = Math.max(window.innerWidth, minDimension);
-    const height = Math.max(window.innerHeight, minDimension);
-    
-    const camera = new OrthographicCamera(-1, 1, 1, -1, 0.1, 1000);
-    const dt = 1 / 60;
-
-    const resolution = new Vector2(
-      configuration.Scale * width,
-      configuration.Scale * height
-    );
-    const aspect = new Vector2(resolution.x / resolution.y, 1.0);
-    aspectRef.current = aspect;
-
-    const velocityRT = new RenderTarget(
-      resolution,
-      2,
-      RGBAFormat,
-      HalfFloatType
-    );
-    const divergenceRT = new RenderTarget(
-      resolution,
-      1,
-      RGBAFormat,
-      HalfFloatType
-    );
-    const pressureRT = new RenderTarget(
-      resolution,
-      2,
-      RGBAFormat,
-      HalfFloatType
-    );
-    const colorRT = new RenderTarget(
-      resolution,
-      2,
-      RGBFormat,
-      UnsignedByteType
-    );
-
-    let v: Texture | undefined, c: Texture | undefined, d: Texture, p: Texture;
-
-    const velocityInitPass = new VelocityInitPass(renderer, resolution);
-    const velocityInitTexture = velocityInitPass.render();
-    const colorInitPass = new ColorInitPass(renderer, resolution);
-    const colorInitTexture = colorInitPass.render();
-    const velocityAdvectionPass = new AdvectionPass(
-      velocityInitTexture,
-      velocityInitTexture,
-      0
-    );
-    const colorAdvectionPass = new AdvectionPass(
-      velocityInitTexture,
-      colorInitTexture,
-      configuration.ColorDecay
-    );
-    const touchForceAdditionPass = new TouchForcePass(
-      resolution,
-      configuration.Radius
-    );
-    const touchColorAdditionPass = new TouchColorPass(
-      resolution,
-      configuration.Radius
-    );
-    const velocityBoundary = new BoundaryPass();
-    const velocityDivergencePass = new DivergencePass();
-    velocityDivergencePass.material.uniforms.texelSize = { 
-      value: new Vector2(1.0 / resolution.x, 1.0 / resolution.y) 
-    };
-    const pressurePass = new JacobiIterationsPass();
-    const pressureSubstractionPass = new GradientSubstractionPass();
-    const compositionPass = new CompositionPass();
-    const cardTexturePass = new CardTexturePass(resolution, configuration.Radius);
-
-    // const textureLoader = new TextureLoader().setPath("./resources/");
-    // loadGradients(textureLoader);
-
-    const handleResize = () => {
+      const renderer = new WebGLRenderer({ canvas });
+      renderer.autoClear = false;
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(window.devicePixelRatio);
+      // Ensure minimum dimensions to prevent NaN values
+      const minDimension = 1;
       const width = Math.max(window.innerWidth, minDimension);
       const height = Math.max(window.innerHeight, minDimension);
-      renderer.setSize(width, height);
-      renderer.setPixelRatio(window.devicePixelRatio);
-      resolution.set(
+
+      const camera = new OrthographicCamera(-1, 1, 1, -1, 0.1, 1000);
+      const dt = 1 / 60;
+
+      const resolution = new Vector2(
         configuration.Scale * width,
         configuration.Scale * height
       );
-      velocityRT.resize(resolution);
-      divergenceRT.resize(resolution);
-      pressureRT.resize(resolution);
-      colorRT.resize(resolution);
-      aspect.set(resolution.x / resolution.y, 1.0);
+      const aspect = new Vector2(resolution.x / resolution.y, 1.0);
       aspectRef.current = aspect;
-      touchForceAdditionPass.update({ aspect });
-      touchColorAdditionPass.update({ aspect });
-      cardTexturePass.update({ aspect });
-      const texelSize = new Vector2(1.0 / resolution.x, 1.0 / resolution.y);
-      velocityDivergencePass.material.uniforms.texelSize.value.copy(texelSize);
-    };
-    window.addEventListener("resize", handleResize);
 
-    // Render loop.
-    function render() {
-      if (configuration.Simulate) {
-        // Advect the velocity vector field.
-        velocityAdvectionPass.update({ timeDelta: dt });
-        v = velocityRT.set(renderer);
-        renderer.render(velocityAdvectionPass.scene, camera);
+      const velocityRT = new RenderTarget(
+        resolution,
+        2,
+        RGBAFormat,
+        HalfFloatType
+      );
+      const divergenceRT = new RenderTarget(
+        resolution,
+        1,
+        RGBAFormat,
+        HalfFloatType
+      );
+      const pressureRT = new RenderTarget(
+        resolution,
+        2,
+        RGBAFormat,
+        HalfFloatType
+      );
+      const colorRT = new RenderTarget(
+        resolution,
+        2,
+        RGBFormat,
+        UnsignedByteType
+      );
 
-        // Process input forces.
-        if (inputTouchesRef.current.length > 0) {
-          touchForceAdditionPass.update({
-            touches: inputTouchesRef.current,
-            radius: configuration.Radius,
-            velocity: v,
-          });
+      let v: Texture | undefined,
+        c: Texture | undefined,
+        d: Texture,
+        p: Texture;
+
+      const velocityInitPass = new VelocityInitPass(renderer, resolution);
+      const velocityInitTexture = velocityInitPass.render();
+      const colorInitPass = new ColorInitPass(renderer, resolution);
+      const colorInitTexture = colorInitPass.render();
+      const velocityAdvectionPass = new AdvectionPass(
+        velocityInitTexture,
+        velocityInitTexture,
+        0
+      );
+      const colorAdvectionPass = new AdvectionPass(
+        velocityInitTexture,
+        colorInitTexture,
+        configuration.ColorDecay
+      );
+      const touchForceAdditionPass = new TouchForcePass(
+        resolution,
+        configuration.Radius
+      );
+      const touchColorAdditionPass = new TouchColorPass(
+        resolution,
+        configuration.Radius
+      );
+      const velocityBoundary = new BoundaryPass();
+      const velocityDivergencePass = new DivergencePass();
+      velocityDivergencePass.material.uniforms.texelSize = {
+        value: new Vector2(1.0 / resolution.x, 1.0 / resolution.y),
+      };
+      const pressurePass = new JacobiIterationsPass();
+      const pressureSubstractionPass = new GradientSubstractionPass();
+      const compositionPass = new CompositionPass();
+      const cardTexturePass = new CardTexturePass(
+        resolution,
+        configuration.Radius
+      );
+
+      // const textureLoader = new TextureLoader().setPath("./resources/");
+      // loadGradients(textureLoader);
+
+      const handleResize = () => {
+        const width = Math.max(window.innerWidth, minDimension);
+        const height = Math.max(window.innerHeight, minDimension);
+        renderer.setSize(width, height);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        resolution.set(
+          configuration.Scale * width,
+          configuration.Scale * height
+        );
+        velocityRT.resize(resolution);
+        divergenceRT.resize(resolution);
+        pressureRT.resize(resolution);
+        colorRT.resize(resolution);
+        aspect.set(resolution.x / resolution.y, 1.0);
+        aspectRef.current = aspect;
+        touchForceAdditionPass.update({ aspect });
+        touchColorAdditionPass.update({ aspect });
+        cardTexturePass.update({ aspect });
+        const texelSize = new Vector2(1.0 / resolution.x, 1.0 / resolution.y);
+        velocityDivergencePass.material.uniforms.texelSize.value.copy(
+          texelSize
+        );
+      };
+      window.addEventListener("resize", handleResize);
+
+      // Render loop.
+      const render = () => {
+        if (configuration.Simulate) {
+          // Advect the velocity vector field.
+          velocityAdvectionPass.update({ timeDelta: dt });
           v = velocityRT.set(renderer);
-          renderer.render(touchForceAdditionPass.scene, camera);
+          renderer.render(velocityAdvectionPass.scene, camera);
 
-          if (configuration.AddColor) {
-            touchColorAdditionPass.update({
+          // Process input forces.
+          if (inputTouchesRef.current.length > 0) {
+            touchForceAdditionPass.update({
               touches: inputTouchesRef.current,
               radius: configuration.Radius,
-              color: c,
+              velocity: v,
             });
-            c = colorRT.set(renderer);
-            renderer.render(touchColorAdditionPass.scene, camera);
-          }
-        }
+            v = velocityRT.set(renderer);
+            renderer.render(touchForceAdditionPass.scene, camera);
 
-        // Add card texture processing
-        if (cardInputTouchesRef.current.length > 0) {
-          cardTexturePass.update({
-            touches: cardInputTouchesRef.current,
-            radius: configuration.Radius,
+            if (configuration.AddColor) {
+              touchColorAdditionPass.update({
+                touches: inputTouchesRef.current,
+                radius: configuration.Radius,
+                color: c,
+              });
+              c = colorRT.set(renderer);
+              renderer.render(touchColorAdditionPass.scene, camera);
+            }
+          }
+
+          // Add card texture processing
+          if (cardInputTouchesRef.current.length > 0) {
+            cardTexturePass.update({
+              touches: cardInputTouchesRef.current,
+              radius: configuration.Radius,
+              velocity: v,
+              cardTexture: cardInputTouchesRef.current[0].texture,
+            });
+            v = velocityRT.set(renderer);
+            renderer.render(cardTexturePass.scene, camera);
+          }
+
+          // Apply velocity boundaries.
+          if (configuration.Boundaries) {
+            velocityBoundary.update({ velocity: v });
+            v = velocityRT.set(renderer);
+            renderer.render(velocityBoundary.scene, camera);
+          }
+
+          // Compute divergence.
+          velocityDivergencePass.update({
+            timeDelta: dt,
             velocity: v,
-            cardTexture: cardInputTouchesRef.current[0].texture,
+          });
+          d = divergenceRT.set(renderer);
+          renderer.render(velocityDivergencePass.scene, camera);
+
+          // Solve for pressure via Jacobi iterations.
+          pressurePass.update({ divergence: d });
+          for (let i = 0; i < configuration.Iterations; ++i) {
+            p = pressureRT.set(renderer);
+            renderer.render(pressurePass.scene, camera);
+            pressurePass.update({ previousIteration: p });
+          }
+
+          // Subtract pressure gradient.
+          pressureSubstractionPass.update({
+            timeDelta: dt,
+            velocity: v,
+            pressure: p,
           });
           v = velocityRT.set(renderer);
-          renderer.render(cardTexturePass.scene, camera);
+          renderer.render(pressureSubstractionPass.scene, camera);
+
+          // Advect the color buffer.
+          colorAdvectionPass.update({
+            timeDelta: dt,
+            inputTexture: c,
+            velocity: v,
+            decay: configuration.ColorDecay,
+          });
+          c = colorRT.set(renderer);
+          renderer.render(colorAdvectionPass.scene, camera);
+
+          // Prepare passes for next frame.
+          velocityAdvectionPass.update({
+            inputTexture: v,
+            velocity: v,
+          });
+          colorAdvectionPass.update({
+            inputTexture: c,
+          });
         }
 
-        // Apply velocity boundaries.
-        if (configuration.Boundaries) {
-          velocityBoundary.update({ velocity: v });
-          v = velocityRT.set(renderer);
-          renderer.render(velocityBoundary.scene, camera);
+        renderer.setRenderTarget(null);
+        let visualization: any;
+        switch (configuration.Visualize) {
+          case "Color":
+            visualization = c;
+            break;
+          case "Velocity":
+            visualization = v;
+            break;
+          case "Divergence":
+            visualization = d;
+            break;
+          case "Pressure":
+            visualization = p;
+            break;
+          default:
+            visualization = c;
+            break;
         }
-
-        // Compute divergence.
-        velocityDivergencePass.update({
-          timeDelta: dt,
-          velocity: v,
+        compositionPass.update({
+          colorBuffer: visualization,
+          mode: configuration.Mode,
+          gradient: gradientTextures[0],
         });
-        d = divergenceRT.set(renderer);
-        renderer.render(velocityDivergencePass.scene, camera);
+        renderer.render(compositionPass.scene, camera);
+      };
 
-        // Solve for pressure via Jacobi iterations.
-        pressurePass.update({ divergence: d });
-        for (let i = 0; i < configuration.Iterations; ++i) {
-          p = pressureRT.set(renderer);
-          renderer.render(pressurePass.scene, camera);
-          pressurePass.update({ previousIteration: p });
-        }
-
-        // Subtract pressure gradient.
-        pressureSubstractionPass.update({
-          timeDelta: dt,
-          velocity: v,
-          pressure: p,
-        });
-        v = velocityRT.set(renderer);
-        renderer.render(pressureSubstractionPass.scene, camera);
-
-        // Advect the color buffer.
-        colorAdvectionPass.update({
-          timeDelta: dt,
-          inputTexture: c,
-          velocity: v,
-          decay: configuration.ColorDecay,
-        });
-        c = colorRT.set(renderer);
-        renderer.render(colorAdvectionPass.scene, camera);
-
-        // Prepare passes for next frame.
-        velocityAdvectionPass.update({
-          inputTexture: v,
-          velocity: v,
-        });
-        colorAdvectionPass.update({
-          inputTexture: c,
-        });
-      }
-
-      renderer.setRenderTarget(null);
-      let visualization: any;
-      switch (configuration.Visualize) {
-        case "Color":
-          visualization = c;
-          break;
-        case "Velocity":
-          visualization = v;
-          break;
-        case "Divergence":
-          visualization = d;
-          break;
-        case "Pressure":
-          visualization = p;
-          break;
-        default:
-          visualization = c;
-          break;
-      }
-      compositionPass.update({
-        colorBuffer: visualization,
-        mode: configuration.Mode,
-        gradient: gradientTextures[0],
-      });
-      renderer.render(compositionPass.scene, camera);
+      let animationId: number;
+      const animate = () => {
+        render();
+        animationId = requestAnimationFrame(animate);
+      };
+      animate();
+      return () => {
+        cancelAnimationFrame(animationId);
+        window.removeEventListener("resize", handleResize);
+      };
+    } catch (error) {
+      console.error("Error in FluidBackground useEffect:", error);
     }
-
-    let animationId: number;
-    function animate() {
-      render();
-      animationId = requestAnimationFrame(animate);
-    }
-    animate();
-
-    return () => {
-      cancelAnimationFrame(animationId);
-      window.removeEventListener("resize", handleResize);
-    };
   }, []);
 
   return (

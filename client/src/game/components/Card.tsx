@@ -144,16 +144,32 @@ export class Card {
     };
 
     const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+    
+    // Ensure geometry is valid before proceeding
+    if (!geometry.attributes.position || !geometry.attributes.uv) {
+      throw new Error('Invalid geometry: missing position or UV attributes');
+    }
 
     const uvAttribute = geometry.attributes.uv;
     const positions = geometry.attributes.position;
 
+    // Update UV coordinates with validation
     for (let i = 0; i < uvAttribute.count; i++) {
       const x = positions.getX(i);
       const y = positions.getY(i);
+      
+      // Skip invalid positions
+      if (isNaN(x) || isNaN(y)) {
+        console.warn(`Invalid position at index ${i}: x=${x}, y=${y}`);
+        continue;
+      }
 
       uvAttribute.setXY(i, (x + width / 2) / width, (y + height / 2) / height);
     }
+
+    // Ensure geometry is properly initialized
+    geometry.computeBoundingBox();
+    geometry.computeBoundingSphere();
 
     const textureLoader = new THREE.TextureLoader();
     const frontTexture = textureLoader.load("/assets/black-reverse.jpg");

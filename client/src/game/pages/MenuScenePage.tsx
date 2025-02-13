@@ -17,46 +17,70 @@ const MenuScenePage: React.FC = () => {
   useEffect(() => {
     if (!canvasRef.current) return;
 
-    const renderer = new THREE.WebGLRenderer({
-      canvas: canvasRef.current,
-      alpha: true,
-      antialias: true,
-    });
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        canvas: canvasRef.current,
+        alpha: true,
+        antialias: true,
+        powerPreference: "high-performance",
+        logarithmicDepthBuffer: true,
+      });
+      
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setClearColor(0x000000, 0);
+    } catch (error) {
+      console.error('Failed to initialize WebGL renderer:', error);
+      return;
+    }
     renderer.setSize(window.innerWidth, window.innerHeight);
     const scene = new THREE.Scene();
+    scene.matrixWorldAutoUpdate = true;
+
+    const aspect = window.innerWidth / window.innerHeight;
     const camera = new THREE.PerspectiveCamera(
       75,
-      window.innerWidth / window.innerHeight,
+      aspect,
       0.1,
       1000
     );
     camera.name = "camera";
-    camera.position.z = 5;
+    camera.position.set(0, 0, 5);
+    camera.updateMatrix();
+    camera.updateMatrixWorld();
 
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
 
-    const menuCards: GuiCard[] = [
-      new GuiCard({
-        scene,
-        alt: "PLAY",
-        // frontTexture: '/assets/black-reverse.jpg',
-        onClick: () => {
-          navigate("/game");
-        },
-        position: new THREE.Vector3(-1, -0.5, 0),
-        rotation: new THREE.Euler(0, 0, 0),
-        fluidRef: fluidRef as React.RefObject<FluidBackgroundHandle>,
-      }),
-      new GuiCard({
-        scene,
-        alt: "Private Rooms",
-        onClick: () => {},
-        position: new THREE.Vector3(1, -0.5, 0),
-        rotation: new THREE.Euler(0, 0, 0),
-        fluidRef: fluidRef as React.RefObject<FluidBackgroundHandle>,
-      }),
-    ];
+    // Initialize menu cards with explicitly constructed vectors and validation
+    const menuCards: GuiCard[] = [];
+    try {
+      menuCards.push(
+        new GuiCard({
+          scene,
+          alt: "PLAY",
+          onClick: () => {
+            navigate("/game");
+          },
+          position: new THREE.Vector3(-1, -0.5, 0),
+          rotation: new THREE.Euler(0, 0, 0),
+          fluidRef: fluidRef as React.RefObject<FluidBackgroundHandle>,
+        })
+      );
+
+      menuCards.push(
+        new GuiCard({
+          scene,
+          alt: "Private Rooms",
+          onClick: () => {},
+          position: new THREE.Vector3(1, -0.5, 0),
+          rotation: new THREE.Euler(0, 0, 0),
+          fluidRef: fluidRef as React.RefObject<FluidBackgroundHandle>,
+        })
+      );
+    } catch (error) {
+      console.error('Error creating menu cards:', error);
+    }
     // Animate cards into position
     // menuCards.forEach((card, index) => {
     //   gsap.to(card.getMeshPosition(), { y: -1.5, duration: 1.5, delay: 0.5 + index * 0.2, ease: "power2.out" });
@@ -162,14 +186,55 @@ const MenuScenePage: React.FC = () => {
 
     const animate = () => {
       requestAnimationFrame(animate);
-      renderer.render(scene, camera);
+      
+      try {
+        // Update matrices before rendering
+        scene.updateMatrixWorld();
+        camera.updateMatrixWorld();
+        
+        // Render the scene
+        renderer.render(scene, camera);
+      } catch (error) {
+        console.error('Render error:', error);
+      }
     };
+
+    // Handle window resize
+    const handleResize = () => {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      
+      renderer.setSize(width, height);
+    };
+    
+    window.addEventListener('resize', handleResize);
     animate();
 
     return () => {
+      window.removeEventListener('resize', handleResize);
       renderer.domElement.removeEventListener("mousedown", onMouseDown);
       renderer.domElement.removeEventListener("mousemove", onMouseMove);
       renderer.domElement.removeEventListener("mouseup", onMouseUp);
+      
+      // Properly clean up Three.js resources
+      scene.traverse((object) => {
+        if (object instanceof THREE.Mesh) {
+          if (object.geometry) {
+            object.geometry.dispose();
+          }
+          if (object.material) {
+            if (Array.isArray(object.material)) {
+              object.material.forEach(material => material.dispose());
+            } else {
+              object.material.dispose();
+            }
+          }
+        }
+      });
+      
       renderer.dispose();
     };
   }, [navigate]);
