@@ -525,10 +525,10 @@ export class GuiCard extends Card {
     canvas.height = 420;
 
     if (context) {
-      context.fillStyle = "#000000";
+      context.fillStyle = "#E6E6E6";
       context.fillRect(0, 0, canvas.width, canvas.height);
       context.font = "bold 48px Arial";
-      context.fillStyle = "#FFFFFF";
+      context.fillStyle = "#3D3D3D";
       context.textAlign = "center";
       context.textBaseline = "middle";
       context.fillText(this.alt, canvas.width / 2, canvas.height / 2);
