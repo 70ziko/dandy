@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from "react";
 import * as THREE from "three";
 import gsap from "gsap";
 import { Hand } from "../components/Hand";
+import { Deck } from "../components/Deck";
 
 import type { SceneRefs, Props, Card } from "../types";
 
@@ -35,7 +36,6 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
           }
         });
 
-        // Clean up renderer
         if (renderer.domElement && renderer.domElement.parentNode) {
           renderer.domElement.parentNode.removeChild(renderer.domElement);
         }
@@ -69,6 +69,8 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
       table.rotation.x = -Math.PI * 0.5;
       table.position.y = -5;
       scene.add(table);
+
+      new Deck({ scene, position: new THREE.Vector3(0, -4, 0) });
 
       scene.add(new THREE.AmbientLight(0xffffff, 0.5));
       const directionalLight = new THREE.DirectionalLight(0xffffff, 1);

@@ -81,7 +81,6 @@ const MenuScenePage: React.FC = () => {
     } catch (error) {
       console.error("Error creating menu cards:", error);
     }
-    // Optionally animate cards into position...
     // menuCards.forEach((card, index) => {
     //   gsap.to(card.getMeshPosition(), { y: -1.5, duration: 1.5, delay: 0.5 + index * 0.2, ease: "power2.out" });
     // });
