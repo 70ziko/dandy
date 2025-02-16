@@ -83,27 +83,45 @@ export class Hand {
       z = Math.max(Math.min(z, tableSize), -tableSize);
 
       const landingPosition = new THREE.Vector3(x, tableCenter.y, z);
+      const targetRotation = new THREE.Euler(
+        card.getMesh().rotation.x + Math.PI / 3,
+        card.getMesh().rotation.y,
+        card.getMesh().rotation.z,
+        "XYZ"
+      );
 
       const controlPoint = new THREE.Vector3(
-        card.getMeshPosition().x,
-        card.getMeshPosition().y + 5, // Adjust for arc height
-        card.getMeshPosition().z
+        card.getMesh().position.x,
+        card.getMesh().position.y + 5, // Adjust for arc height
+        card.getMesh().position.z
       );
 
       const timeline = gsap.timeline();
-      timeline.to(card.getMeshPosition(), {
+      timeline.to(card.getMesh().position, {
         bezier: {
           type: "quadratic",
-          values: [card.getMeshPosition(), controlPoint, landingPosition],
+          values: [card.getMesh().position, controlPoint, landingPosition],
         },
         duration: 0.7,
         ease: "power1.inOut",
-        onComplete: () => {
-          console.log(`Card ${index} animation complete`);
-          card.setBasePosition(landingPosition);
-          card.getMeshPosition().copy(landingPosition);
-        },
       });
+
+      timeline.to(
+        card.getMesh().rotation,
+        {
+          z: targetRotation.z,
+          duration: 0.7,
+          ease: "power1.inOut",
+          onComplete: () => {
+            console.log(`Card ${index} animation complete`);
+            card.setBasePosition(landingPosition);
+            card.getMesh().position.copy(landingPosition);
+            card.setBaseRotation(targetRotation);
+            card.getMesh().rotation.copy(targetRotation);
+          },
+        },
+        0
+      );
     });
   }
 

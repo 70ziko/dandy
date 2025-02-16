@@ -82,7 +82,7 @@ const MenuScenePage: React.FC = () => {
       console.error("Error creating menu cards:", error);
     }
     // menuCards.forEach((card, index) => {
-    //   gsap.to(card.getMeshPosition(), { y: -1.5, duration: 1.5, delay: 0.5 + index * 0.2, ease: "power2.out" });
+    //   gsap.to(card.getMesh().position, { y: -1.5, duration: 1.5, delay: 0.5 + index * 0.2, ease: "power2.out" });
     // });
 
     // Add 3D text "DANDY"
@@ -196,7 +196,7 @@ const MenuScenePage: React.FC = () => {
       if (draggedCard) {
         const dragPosition = new THREE.Vector3();
         const distance = draggedCard
-          .getMeshPosition()
+          .getMesh().position
           .distanceTo(camera.position);
         raycaster.ray.at(distance, dragPosition);
         draggedCard.drag(dragPosition);

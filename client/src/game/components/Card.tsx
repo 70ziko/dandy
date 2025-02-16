@@ -144,10 +144,10 @@ export class Card {
     };
 
     const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-    
+
     // Ensure geometry is valid before proceeding
     if (!geometry.attributes.position || !geometry.attributes.uv) {
-      throw new Error('Invalid geometry: missing position or UV attributes');
+      throw new Error("Invalid geometry: missing position or UV attributes");
     }
 
     const uvAttribute = geometry.attributes.uv;
@@ -157,7 +157,7 @@ export class Card {
     for (let i = 0; i < uvAttribute.count; i++) {
       const x = positions.getX(i);
       const y = positions.getY(i);
-      
+
       // Skip invalid positions
       if (isNaN(x) || isNaN(y)) {
         console.warn(`Invalid position at index ${i}: x=${x}, y=${y}`);
@@ -218,8 +218,8 @@ export class Card {
     return this.hitbox;
   }
 
-  public getMeshPosition(): THREE.Vector3 {
-    return this.mesh.position;
+  public getMesh(): THREE.Mesh {
+    return this.mesh;
   }
 
   public startFloatingAnimation(): void {
@@ -455,12 +455,18 @@ export class Card {
     const currentTime = now;
     const deltaTime = Math.max((currentTime - this.lastTime) / 1000, 0.01);
     const currentPosition = this.mesh.position.clone();
-    const velocity = currentPosition.clone().sub(this.lastPosition).divideScalar(deltaTime);
+    const velocity = currentPosition
+      .clone()
+      .sub(this.lastPosition)
+      .divideScalar(deltaTime);
     const velocityScale = -0.4;
     const scaledVelocity = velocity.multiplyScalar(velocityScale);
 
     for (const point of this.edgePoints) {
-      const worldPos = point.clone().applyEuler(this.mesh.rotation).add(this.mesh.position);
+      const worldPos = point
+        .clone()
+        .applyEuler(this.mesh.rotation)
+        .add(this.mesh.position);
       const vector = worldPos.project(camera);
       const screenX = ((vector.x + 1.1) * window.innerWidth) / 2;
       const screenY = ((-vector.y + 0.9) * window.innerHeight) / 2;
@@ -477,10 +483,15 @@ export class Card {
         ).multiplyScalar(1.0);
         const totalVelocityX = scaledVelocity.x + rotationalVelocity.x;
         const totalVelocityY = scaledVelocity.y + rotationalVelocity.y;
-        
+
         // Original: addInput
-        this.fluidRef.current.addInput(screenX, screenY, totalVelocityX, totalVelocityY);
-        
+        this.fluidRef.current.addInput(
+          screenX,
+          screenY,
+          totalVelocityX,
+          totalVelocityY
+        );
+
         // New: addCardInput including the card's texture
         // const frontMat = Array.isArray(this.mesh.material)
         //   ? this.mesh.material[0] as THREE.MeshPhongMaterial
@@ -489,9 +500,9 @@ export class Card {
         // if (frontTexture) {
         //   this.fluidRef.current.addCardInput(screenX, screenY, totalVelocityX, totalVelocityY, frontTexture);
         // } else {
-          // const textureLoader = new THREE.TextureLoader();
-          // const brushTexture = textureLoader.load("/assets/square_brush.png");
-          // this.fluidRef.current.addCardInput(screenX, screenY, totalVelocityX, totalVelocityY, brushTexture);
+        // const textureLoader = new THREE.TextureLoader();
+        // const brushTexture = textureLoader.load("/assets/square_brush.png");
+        // this.fluidRef.current.addCardInput(screenX, screenY, totalVelocityX, totalVelocityY, brushTexture);
         // }
       }
     }
@@ -501,6 +512,10 @@ export class Card {
 
   public setBasePosition(position: THREE.Vector3): void {
     this.basePosition.copy(position);
+  }
+
+  public setBaseRotation(rotation: THREE.Euler): void {
+    this.baseRotation.copy(rotation);
   }
 }
 
