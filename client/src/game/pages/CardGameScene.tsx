@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import * as THREE from "three";
 import gsap from "gsap";
 import { Hand } from "../components/Hand";
@@ -292,11 +292,11 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
     };
   }, [numCards]);
 
-  const onkeydown = (event: KeyboardEvent) => {
+  const onkeydown = useCallback((event: KeyboardEvent) => {
     if (event.key.toUpperCase() === "C") {
       checkCardsHandler();
     }
-  };
+  }, [checkCardsHandler]);
 
   useEffect(() => {
     window.addEventListener("keydown", onkeydown);
@@ -304,7 +304,7 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
     return () => {
       window.removeEventListener("keydown", onkeydown);
     };
-  }, []);
+  }, [onkeydown]);
 
   return <div ref={mountRef} className="w-full h-screen" />;
 };
