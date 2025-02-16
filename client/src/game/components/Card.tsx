@@ -356,8 +356,6 @@ export class Card {
       },
       "-=0.2"
     );
-
-    this.currentTween = tl;
   }
 
   public startDrag(mousePos: THREE.Vector3): void {
@@ -499,6 +497,10 @@ export class Card {
     }
     this.lastPosition.copy(currentPosition);
     this.lastTime = currentTime;
+  }
+
+  public setBasePosition(position: THREE.Vector3): void {
+    this.basePosition.copy(position);
   }
 }
 

@@ -12,6 +12,12 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
   const handRef = useRef<Hand | null>(null);
   const animationFrameRef = useRef<number | void>(null);
 
+  const checkCardsHandler = () => {
+    if (handRef.current) {
+      handRef.current.checkCards();
+    }
+  };
+
   useEffect(() => {
     const mountElement = mountRef.current;
     if (!mountElement) return;
@@ -285,6 +291,20 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
       cleanupRaycaster();
     };
   }, [numCards]);
+
+  const onkeydown = (event: KeyboardEvent) => {
+    if (event.key.toUpperCase() === "C") {
+      checkCardsHandler();
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener("keydown", onkeydown);
+
+    return () => {
+      window.removeEventListener("keydown", onkeydown);
+    };
+  }, []);
 
   return <div ref={mountRef} className="w-full h-screen" />;
 };

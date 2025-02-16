@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { Card } from "./Card";
+import gsap from "gsap";
 
 interface HandConstructorParams {
   scene: THREE.Scene;
@@ -58,6 +59,52 @@ export class Hand {
       const card = new Card({ scene: this.scene, position, rotation });
       this.cards.push(card);
     }
+  }
+
+  // Helper function for generating normally distributed random numbers
+  private generateNormalRandom(mean: number, stdDev: number): number {
+    let u = 0,
+      v = 0;
+    while (u === 0) u = Math.random(); // Converting [0,1) to (0,1)
+    while (v === 0) v = Math.random();
+    const num = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+    return num * stdDev + mean;
+  }
+
+  public checkCards() {
+    const tableCenter = new THREE.Vector3(0, -5, 0);
+    const tableSize = 10; // Half size, so cards land within +/- tableSize
+
+    this.cards.forEach((card, index) => {
+      let x = this.generateNormalRandom(tableCenter.x, 1);
+      let z = this.generateNormalRandom(tableCenter.z + 2, 1);
+
+      x = Math.max(Math.min(x, tableSize), -tableSize);
+      z = Math.max(Math.min(z, tableSize), -tableSize);
+
+      const landingPosition = new THREE.Vector3(x, tableCenter.y, z);
+
+      const controlPoint = new THREE.Vector3(
+        card.getMeshPosition().x,
+        card.getMeshPosition().y + 5, // Adjust for arc height
+        card.getMeshPosition().z
+      );
+
+      const timeline = gsap.timeline();
+      timeline.to(card.getMeshPosition(), {
+        bezier: {
+          type: "quadratic",
+          values: [card.getMeshPosition(), controlPoint, landingPosition],
+        },
+        duration: 0.7,
+        ease: "power1.inOut",
+        onComplete: () => {
+          console.log(`Card ${index} animation complete`);
+          card.setBasePosition(landingPosition);
+          card.getMeshPosition().copy(landingPosition);
+        },
+      });
+    });
   }
 
   public remove(): void {
