@@ -1,10 +1,13 @@
 import React, { useCallback, useEffect, useRef } from "react";
 import * as THREE from "three";
 import gsap from "gsap";
+import { MotionPathPlugin } from "gsap/MotionPathPlugin";
 import { Hand } from "../components/Hand";
 import { Deck } from "../components/Deck";
 
 import type { SceneRefs, Props, Card } from "../types";
+
+gsap.registerPlugin(MotionPathPlugin) 
 
 const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
   const mountRef = useRef<HTMLDivElement>(null);

@@ -70,6 +70,7 @@ export class Hand {
     const num = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
     return num * stdDev + mean;
   }
+
   public checkCards() {
     const tableCenter = new THREE.Vector3(0, -5, 0);
     const tableSize = 10; // Half size, so cards land within +/- tableSize
@@ -91,17 +92,24 @@ export class Hand {
 
       const controlPoint = new THREE.Vector3(
         card.getMesh().position.x,
-        card.getMesh().position.y + 7, // Adjust for arc height
+        card.getMesh().position.y + 2, // Adjust for arc height
         card.getMesh().position.z
       );
 
+      const path = [
+        card.getMesh().position,
+        controlPoint,
+        landingPosition
+      ];
+
       gsap.to(card.getMesh().position, {
-        bezier: {
+        motionPath: {
+          path: path,
           type: "quadratic",
-          values: [card.getMesh().position, controlPoint, landingPosition],
+          autoRotate: false
         },
         duration: 1,
-        ease: "power1.inOut",
+        ease: "cubic.in",
       });
 
       gsap.to(
@@ -109,7 +117,7 @@ export class Hand {
         {
           z: targetRotation.z,
           duration: 1,
-          ease: "power1.inOut",
+          ease: "",
           onComplete: () => {
             console.log(`Card ${index} animation complete`);
             card.setBasePosition(landingPosition);
