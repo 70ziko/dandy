@@ -12,11 +12,11 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
   const handRef = useRef<Hand | null>(null);
   const animationFrameRef = useRef<number | void>(null);
 
-  const checkCardsHandler = () => {
+  const checkCardsHandler = useCallback(() => {
     if (handRef.current) {
       handRef.current.checkCards();
     }
-  };
+  }, []);
 
   useEffect(() => {
     const mountElement = mountRef.current;
