@@ -238,6 +238,12 @@ export class Card {
     }
   }
 
+  public stopFloatingAnimation(): void {
+    if (this.floatingAnimation) {
+      this.floatingAnimation.kill();
+    }
+  }
+
   public spreadFrom(center: number, direction: number, amount: number): void {
     if (this.isHovered) return;
 

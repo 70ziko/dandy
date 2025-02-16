@@ -70,7 +70,6 @@ export class Hand {
     const num = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
     return num * stdDev + mean;
   }
-
   public checkCards() {
     const tableCenter = new THREE.Vector3(0, -5, 0);
     const tableSize = 10; // Half size, so cards land within +/- tableSize
@@ -92,25 +91,24 @@ export class Hand {
 
       const controlPoint = new THREE.Vector3(
         card.getMesh().position.x,
-        card.getMesh().position.y + 5, // Adjust for arc height
+        card.getMesh().position.y + 7, // Adjust for arc height
         card.getMesh().position.z
       );
 
-      const timeline = gsap.timeline();
-      timeline.to(card.getMesh().position, {
+      gsap.to(card.getMesh().position, {
         bezier: {
           type: "quadratic",
           values: [card.getMesh().position, controlPoint, landingPosition],
         },
-        duration: 0.7,
+        duration: 1,
         ease: "power1.inOut",
       });
 
-      timeline.to(
+      gsap.to(
         card.getMesh().rotation,
         {
           z: targetRotation.z,
-          duration: 0.7,
+          duration: 1,
           ease: "power1.inOut",
           onComplete: () => {
             console.log(`Card ${index} animation complete`);
@@ -119,9 +117,9 @@ export class Hand {
             card.setBaseRotation(targetRotation);
             card.getMesh().rotation.copy(targetRotation);
           },
-        },
-        0
+        }
       );
+      card.stopFloatingAnimation();
     });
   }
 
