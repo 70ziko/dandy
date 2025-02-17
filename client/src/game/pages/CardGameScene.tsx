@@ -75,7 +75,7 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
         side: THREE.DoubleSide,
       });
       const table = new THREE.Mesh(tableGeometry, tableMaterial);
-      table.rotation.x = -Math.PI * 0.5;
+      table.rotation.x = -Math.PI / 2;
       table.position.y = -5;
       scene.add(table);
 
@@ -265,7 +265,7 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
     handRef.current = new Hand({
       scene: sceneRef.current.scene,
       numCards,
-      tablePosition: new THREE.Vector3(0, -6, 5),
+      holdingPosition: new THREE.Vector3(0, -6, 5),
     });
 
     const cleanupRaycaster = setupRaycaster();

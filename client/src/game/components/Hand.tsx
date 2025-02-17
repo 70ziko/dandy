@@ -5,7 +5,9 @@ import gsap from "gsap";
 interface HandConstructorParams {
   scene: THREE.Scene;
   numCards?: number;
-  tablePosition?: THREE.Vector3;
+  holdingPosition?: THREE.Vector3;
+  lyingPosition?: THREE.Vector3;
+  isHolding?: boolean;
 }
 
 interface FanProperties {
@@ -17,18 +19,23 @@ interface FanProperties {
 export class Hand {
   private scene: THREE.Scene;
   private numCards: number;
-  private tablePosition: THREE.Vector3;
+  private holdingPosition: THREE.Vector3;
+  private lyingPosition: THREE.Vector3;
   private cards: Card[];
+  public isHolding: boolean;
 
   constructor({
     scene,
     numCards = 5,
-    tablePosition = new THREE.Vector3(0, -6, 5),
+    holdingPosition = new THREE.Vector3(0, -6, 5),
+    lyingPosition = new THREE.Vector3(0, -6, 0),
   }: HandConstructorParams) {
     this.scene = scene;
     this.numCards = numCards;
-    this.tablePosition = tablePosition;
+    this.holdingPosition = holdingPosition;
+    this.lyingPosition = lyingPosition;
     this.cards = [];
+    this.isHolding = true;
     this.spawnCards();
   }
 
@@ -50,18 +57,17 @@ export class Hand {
     for (let i = 0; i < this.numCards; i++) {
       const angle = centerAngle + fanSpread * (i / (this.numCards - 1) - 0.5);
       const xPos = Math.cos(angle) * fanRadius;
-      const yPos = Math.sin(angle) * fanRadius + this.tablePosition.y;
-      const zPos = i * zOffset + this.tablePosition.z;
+      const yPos = Math.sin(angle) * fanRadius + this.holdingPosition.y;
+      const zPos = i * zOffset + this.holdingPosition.z;
 
-      const position = new THREE.Vector3(xPos, yPos, zPos);
+      const holdingPosition = new THREE.Vector3(xPos, yPos, zPos);
       const rotation = new THREE.Euler(-Math.PI * 0.2, 0, angle + Math.PI / 2);
 
-      const card = new Card({ scene: this.scene, position, rotation });
+      const card = new Card({ scene: this.scene, position: holdingPosition, rotation });
       this.cards.push(card);
     }
   }
 
-  // Helper function for generating normally distributed random numbers
   private generateNormalRandom(mean: number, stdDev: number): number {
     let u = 0,
       v = 0;
@@ -71,13 +77,67 @@ export class Hand {
     return num * stdDev + mean;
   }
 
+  public toggleHolding(): void {
+    this.isHolding = !this.isHolding;
+    const targetPosition = this.isHolding
+      ? this.holdingPosition
+      : this.lyingPosition;
+
+    const targetNumCards = this.cards.length;
+    const { fanRadius, fanSpread, zOffset } = this.calculateFanProperties(
+      targetNumCards
+    );
+    const centerAngle = Math.PI / 2;
+
+    this.cards.forEach((card, index) => {
+      const angle =
+        centerAngle + fanSpread * (index / (targetNumCards - 1) - 0.5);
+
+      const fanRadiusAdjusted = this.isHolding ? fanRadius : fanRadius * 0.8;
+
+      const xPos = Math.cos(angle) * fanRadiusAdjusted;
+      const yPos =
+        Math.sin(angle) * fanRadiusAdjusted + targetPosition.y;
+      const zPos = index * zOffset + targetPosition.z;
+
+      const targetholdingPosition = new THREE.Vector3(xPos, yPos, zPos);
+      const targetRotation = new THREE.Euler(
+        -Math.PI * 0.2,
+        0,
+        angle + Math.PI / 2
+      );
+
+      gsap.to(card.getMesh().position, {
+        x: targetholdingPosition.x,
+        y: targetholdingPosition.y,
+        z: targetholdingPosition.z,
+        duration: 0.5,
+        ease: "power2.inOut",
+      });
+
+      gsap.to(card.getMesh().rotation, {
+        x: targetRotation.x,
+        y: targetRotation.y,
+        z: targetRotation.z,
+        duration: 0.5,
+        ease: "power2.inOut",
+        onComplete: () => {
+          // card.setBaseholdingPosition(targetholdingPosition);
+          // card.getMesh().holdingPosition.copy(targetholdingPosition);
+          card.setBaseRotation(targetRotation);
+          card.getMesh().rotation.copy(targetRotation);
+        },
+      });
+    });
+  }
+
   public checkCards() {
     const tableCenter = new THREE.Vector3(0, -5, 0);
     const tableSize = 10; // Half size, so cards land within +/- tableSize
 
     this.cards.forEach((card, index) => {
-      let x = this.generateNormalRandom(tableCenter.x, 1);
-      let z = this.generateNormalRandom(tableCenter.z + 2, 1);
+      let x = this.generateNormalRandom(tableCenter.x, 0.5);
+      let z = this.generateNormalRandom(tableCenter.z + 2, 0.5);
 
       x = Math.max(Math.min(x, tableSize), -tableSize);
       z = Math.max(Math.min(z, tableSize), -tableSize);
@@ -109,7 +169,7 @@ export class Hand {
           autoRotate: false
         },
         duration: 1,
-        ease: "cubic.in",
+        ease: "cubic.inOut",
       });
 
       gsap.to(
