@@ -21,6 +21,12 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
     }
   }, []);
 
+  const toggleHandHoldingHandler = useCallback(() => {
+    if (handRef.current) {
+      handRef.current.toggleHolding();
+    }
+  }, []);
+
   useEffect(() => {
     const mountElement = mountRef.current;
     if (!mountElement) return;
@@ -298,8 +304,10 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
   const onkeydown = useCallback((event: KeyboardEvent) => {
     if (event.key.toUpperCase() === "C") {
       checkCardsHandler();
+    } else if (event.key.toUpperCase() === "H") {
+      toggleHandHoldingHandler();
     }
-  }, [checkCardsHandler]);
+  }, [checkCardsHandler, toggleHandHoldingHandler]);
 
   useEffect(() => {
     window.addEventListener("keydown", onkeydown);

@@ -28,7 +28,7 @@ export class Hand {
     scene,
     numCards = 5,
     holdingPosition = new THREE.Vector3(0, -6, 5),
-    lyingPosition = new THREE.Vector3(0, -6, 0),
+    lyingPosition = new THREE.Vector3(0, -10, 3),
   }: HandConstructorParams) {
     this.scene = scene;
     this.numCards = numCards;
@@ -122,8 +122,8 @@ export class Hand {
         duration: 0.5,
         ease: "power2.inOut",
         onComplete: () => {
-          // card.setBaseholdingPosition(targetholdingPosition);
-          // card.getMesh().holdingPosition.copy(targetholdingPosition);
+          card.setBasePosition(targetholdingPosition);
+          card.getMesh().position.copy(targetholdingPosition);
           card.setBaseRotation(targetRotation);
           card.getMesh().rotation.copy(targetRotation);
         },
