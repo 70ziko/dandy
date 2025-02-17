@@ -177,7 +177,7 @@ export class Hand {
         {
           z: targetRotation.z,
           duration: 1,
-          ease: "",
+          ease: "cubic.inOut",
           onComplete: () => {
             console.log(`Card ${index} animation complete`);
             card.setBasePosition(landingPosition);
