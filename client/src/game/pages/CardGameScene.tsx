@@ -1,15 +1,24 @@
 import gsap from "gsap";
 import * as THREE from "three";
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useParams } from "react-router-dom";
+import { MotionPathPlugin } from "gsap/MotionPathPlugin";
 import { Hand } from "../components/Hand";
 import { Deck } from "../components/Deck";
-import { MotionPathPlugin } from "gsap/MotionPathPlugin";
-
+import { useGuest } from "../../contexts/GuestContext";
+import { api } from "../../services/api";
 import type { SceneRefs, Props, Card } from "../types";
 
-gsap.registerPlugin(MotionPathPlugin) 
+gsap.registerPlugin(MotionPathPlugin);
+
+type GameParams = Record<'tableId', string | undefined>;
 
 const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
+  const { tableId } = useParams<GameParams>();
+  const { guestId } = useGuest();
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
   const mountRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<SceneRefs | null>(null);
   const handRef = useRef<Hand | null>(null);
@@ -26,6 +35,37 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
       handRef.current.toggleHolding();
     }
   }, []);
+
+  // Initialize game and draw cards
+  useEffect(() => {
+    if (!tableId || !guestId) return;
+
+    const initializeGame = async () => {
+      try {
+        setIsLoading(true);
+        // Join the game (will be used with WebSocket later)
+        await api.joinGame(tableId);
+        
+        // Draw initial cards
+        const cards = await api.drawCards(tableId);
+        // TODO: Update hand with cards
+        
+        setIsLoading(false);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to initialize game');
+        setIsLoading(false);
+      }
+    };
+
+    initializeGame();
+
+    // Cleanup when leaving the game
+    return () => {
+      if (tableId) {
+        api.leaveGame(tableId).catch(console.error);
+      }
+    };
+  }, [tableId, guestId]);
 
   useEffect(() => {
     const mountElement = mountRef.current;
@@ -316,6 +356,14 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
       window.removeEventListener("keydown", onkeydown);
     };
   }, [onkeydown]);
+
+  if (error) {
+    return <div className="text-red-600">{error}</div>;
+  }
+
+  if (isLoading) {
+    return <div>Loading game...</div>;
+  }
 
   return <div ref={mountRef} className="w-full h-screen" />;
 };
