@@ -1,18 +1,24 @@
 import express from "express";
-import type { Request, Response, NextFunction, RequestHandler } from "express";
+import { createServer } from "http";
+import type { Request, Response, RequestHandler } from "express";
 import type { GameStates, DrawParams, ActionParams, ActionBody } from "./types";
 import { initializeDeck, drawRandomCards } from "./core";
 import { signData } from "./utils";
+import { redis } from "./services/redis";
+import { mongodb } from "./services/mongodb";
+import { websocket } from "./services/websocket";
+import { guestAuth, rateLimiter, validateRequest } from "./middleware/auth";
 
 const app = express();
+const server = createServer(app);
 const port = process.env.PORT || 3001;
 
-const gameStates: GameStates = {};
+// Initialize WebSocket
+websocket.initialize(server);
 
-let guestCounter = 0;
-
-app.use(function (req: Request, res: Response, next: NextFunction) {
-  res.header("Access-Control-Allow-Origin", "http://localhost:3000");
+// Apply middlewares
+app.use((req: Request, res: Response, next) => {
+  res.header("Access-Control-Allow-Origin", process.env.CLIENT_URL || "http://localhost:3000");
   res.header(
     "Access-Control-Allow-Headers",
     "Origin, X-Guest-Id, X-Requested-With, Content-Type, Accept"
@@ -22,64 +28,102 @@ app.use(function (req: Request, res: Response, next: NextFunction) {
   next();
 });
 
-app.use((req: Request, res: Response, next: NextFunction) => {
-  if (!req.headers["x-guest-id"]) {
-    const guestId = `guest_${++guestCounter}`;
-    res.setHeader("X-Guest-Id", guestId);
+// Apply rate limiting
+app.use(rateLimiter());
+
+// Guest authentication middleware
+app.use(guestAuth);
+
+// Routes that require guest validation
+app.use("/:tableId/*", validateRequest);
+
+const drawHandler: RequestHandler<DrawParams> = async (req, res) => {
+  try {
+    const { tableId } = req.params;
+    const guestId = req.headers["x-guest-id"] as string;
+
+    // Get game state from Redis
+    let gameState = await redis.getGameState(tableId);
+    
+    if (!gameState) {
+      gameState = {
+        players: [],
+        deck: initializeDeck(),
+        currentTurn: null,
+        turnCounter: 0,
+      };
+      await redis.setGameState(tableId, gameState);
+    }
+
+    // Check if player already has cards
+    const playerState = await redis.getPlayerState(guestId);
+    if (playerState?.cards) {
+      res.json(signData(playerState.cards));
+      return;
+    }
+
+    // Draw new cards
+    const cards = drawRandomCards(5, gameState.deck);
+    
+    // Update game and player state
+    gameState.players.push(guestId);
+    if (!gameState.currentTurn) {
+      gameState.currentTurn = guestId;
+    }
+    await redis.setGameState(tableId, gameState);
+    
+    await redis.setPlayerState(guestId, { cards, tableId });
+
+    res.json(signData(cards));
+  } catch (error) {
+    console.error('Error in draw endpoint:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
-  next();
-});
+};
 
-app.get<DrawParams>("/:tableId/draw", ((
-  req: Request<DrawParams>,
-  res: Response
-) => {
-  const { tableId } = req.params;
-  const guestId = req.headers["x-guest-id"] as string;
+const actionHandler: RequestHandler<ActionParams, any, ActionBody> = async (req, res) => {
+  try {
+    const { tableId } = req.params;
+    const { action, value } = req.body;
+    const guestId = req.headers["x-guest-id"] as string;
 
-  if (!gameStates[tableId]) {
-    gameStates[tableId] = {
-      players: new Map(),
-      deck: initializeDeck(),
-      currentTurn: null,
-      turnCounter: 0,
-    };
+    const gameState = await redis.getGameState(tableId);
+    if (!gameState) {
+      res.status(404).json({ error: 'Game not found' });
+      return;
+    }
+
+    // TODO: Implement game logic
+    // This would handle actions like:
+    // - Calling poker figures
+    // - Challenging calls
+    // - Calculating scores
+
+    // Emit action to all players in the game via WebSocket
+    websocket.emitToGame(tableId, 'gameAction', {
+      playerId: guestId,
+      action,
+      value
+    });
+
+    res.json({ status: "action received" });
+  } catch (error) {
+    console.error('Error in action endpoint:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
+};
 
-  const gameState = gameStates[tableId];
+app.get<DrawParams>("/:tableId/draw", drawHandler);
+app.post<ActionParams, any, ActionBody>("/:tableId/action", express.json(), actionHandler);
 
-  if (gameState.players.has(guestId)) {
-    const existingCards = gameState.players.get(guestId);
-    return res.json(signData(existingCards));
-  }
-
-  const cards = drawRandomCards(5, gameState.deck);
-  gameState.players.set(guestId, cards);
-
-  if (!gameState.currentTurn) {
-    gameState.currentTurn = guestId;
-  }
-
-  res.json(signData(cards));
-}) as RequestHandler<DrawParams>);
-
-app.post<ActionParams, any, ActionBody>("/:tableId/action", express.json(), ((
-  req: Request<ActionParams, any, ActionBody>,
-  res: Response
-) => {
-  const { tableId } = req.params;
-  const { action, value } = req.body;
-  const guestId = req.headers["x-guest-id"] as string;
-
-  // TODO: Implement game logic
-  // This would handle actions like:
-  // - Calling poker figures
-  // - Challenging calls
-  // - Calculating scores
-
-  res.json({ status: "not implemented" });
-}) as RequestHandler<ActionParams>);
-
-app.listen(port, () => {
+// Start the server
+server.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
+
+  // Handle graceful shutdown
+  process.on('SIGTERM', async () => {
+    console.log('SIGTERM received. Shutting down gracefully...');
+    await mongodb.close();
+    process.exit(0);
+  });
 });
