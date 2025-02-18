@@ -196,8 +196,8 @@ const MenuScenePage: React.FC = () => {
       if (draggedCard) {
         const dragPosition = new THREE.Vector3();
         const distance = draggedCard
-          .getMesh().position
-          .distanceTo(camera.position);
+          .getMesh()
+          .position.distanceTo(camera.position);
         raycaster.ray.at(distance, dragPosition);
         draggedCard.drag(dragPosition);
         return;

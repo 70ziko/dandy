@@ -1,4 +1,4 @@
-import type { Card } from '../types';
+import type { Card } from "../types";
 
 function drawRandomCards(count: number, deck: Card[]): Card[] {
   const cards: Card[] = [];
@@ -14,9 +14,9 @@ function drawRandomCards(count: number, deck: Card[]): Card[] {
 }
 
 function initializeDeck(): Card[] {
-  const suits: Card['suit'][] = ['hearts', 'diamonds', 'clubs', 'spades'];
-  const values: Card['value'][] = ['A', '9', '10', 'J', 'Q', 'K'];
-  
+  const suits: Card["suit"][] = ["hearts", "diamonds", "clubs", "spades"];
+  const values: Card["value"][] = ["A", "9", "10", "J", "Q", "K"];
+
   const deck: Card[] = [];
   for (const suit of suits) {
     for (const value of values) {

@@ -1,9 +1,9 @@
-import React, { useCallback, useEffect, useRef } from "react";
-import * as THREE from "three";
 import gsap from "gsap";
-import { MotionPathPlugin } from "gsap/MotionPathPlugin";
+import * as THREE from "three";
+import React, { useCallback, useEffect, useRef } from "react";
 import { Hand } from "../components/Hand";
 import { Deck } from "../components/Deck";
+import { MotionPathPlugin } from "gsap/MotionPathPlugin";
 
 import type { SceneRefs, Props, Card } from "../types";
 
