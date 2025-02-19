@@ -60,7 +60,6 @@ class ApiService {
     return this.handleResponse(response);
   }
 
-  // WebSocket event handling (placeholder for future implementation)
   async joinGame(tableId: string): Promise<void> {
     // Will be implemented when WebSocket functionality is added
     console.log('Joining game:', tableId);

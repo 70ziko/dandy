@@ -100,12 +100,12 @@ export class Card {
       bevelSegments: 3,
       UVGenerator: {
         generateSideWallUV: function (
-          geometry: THREE.ExtrudeGeometry,
-          vertices: number[],
-          indexA: number,
-          indexB: number,
-          indexC: number,
-          indexD: number
+          _geometry: THREE.ExtrudeGeometry,
+          _vertices: number[],
+          _indexA: number,
+          _indexB: number,
+          _indexC: number,
+          _indexD: number
         ) {
           return [
             new THREE.Vector2(0, 0),
@@ -115,11 +115,11 @@ export class Card {
           ];
         },
         generateTopUV: function (
-          geometry: THREE.ExtrudeGeometry,
-          vertices: number[],
-          indexA: number,
-          indexB: number,
-          indexC: number
+          _geometry: THREE.ExtrudeGeometry,
+          _vertices: number[],
+          _indexA: number,
+          _indexB: number,
+          _indexC: number
         ) {
           return [
             new THREE.Vector2(0, 1),
@@ -128,11 +128,11 @@ export class Card {
           ];
         },
         generateBottomUV: function (
-          geometry: THREE.ExtrudeGeometry,
-          vertices: number[],
-          indexA: number,
-          indexB: number,
-          indexC: number
+          _geometry: THREE.ExtrudeGeometry,
+          _vertices: number[],
+          _indexA: number,
+          _indexB: number,
+          _indexC: number
         ) {
           return [
             new THREE.Vector2(0, 1),
@@ -145,7 +145,6 @@ export class Card {
 
     const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
 
-    // Ensure geometry is valid before proceeding
     if (!geometry.attributes.position || !geometry.attributes.uv) {
       throw new Error("Invalid geometry: missing position or UV attributes");
     }
@@ -158,7 +157,6 @@ export class Card {
       const x = positions.getX(i);
       const y = positions.getY(i);
 
-      // Skip invalid positions
       if (isNaN(x) || isNaN(y)) {
         console.warn(`Invalid position at index ${i}: x=${x}, y=${y}`);
         continue;
@@ -167,7 +165,6 @@ export class Card {
       uvAttribute.setXY(i, (x + width / 2) / width, (y + height / 2) / height);
     }
 
-    // Ensure geometry is properly initialized
     geometry.computeBoundingBox();
     geometry.computeBoundingSphere();
 
@@ -244,7 +241,7 @@ export class Card {
     }
   }
 
-  public spreadFrom(center: number, direction: number, amount: number): void {
+  public spreadFrom(_center: number, direction: number, amount: number): void {
     if (this.isHovered) return;
 
     const targetX = this.basePosition.x + direction * amount;

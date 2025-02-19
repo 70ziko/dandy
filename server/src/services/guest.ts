@@ -45,7 +45,6 @@ export class GuestService {
       return false;
     }
 
-    // Check if session is not expired
     const now = Date.now();
     const sessionAge = (now - session.lastActive) / 1000; // Convert to seconds
     if (sessionAge > this.SESSION_TTL) {
@@ -53,7 +52,6 @@ export class GuestService {
       return false;
     }
 
-    // Refresh session
     await this.refreshSession(guestId);
     return true;
   }

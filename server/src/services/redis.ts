@@ -1,5 +1,4 @@
 import { createClient } from 'redis';
-import { promisify } from 'util';
 
 const redisClient = createClient({
   url: process.env.REDIS_URL || 'redis://localhost:6379',
@@ -8,15 +7,12 @@ const redisClient = createClient({
 redisClient.on('error', (err) => console.error('Redis Client Error', err));
 redisClient.on('connect', () => console.log('Connected to Redis'));
 
-// Connect to Redis
 redisClient.connect().catch(console.error);
 
-// Game state management
 export const gameStateKey = (gameId: string) => `game:${gameId}`;
 export const playerKey = (guestId: string) => `player:${guestId}`;
 
 export const redis = {
-  // Guest session management
   async setGuestSession(guestId: string, data: any, ttl: number = 3600): Promise<void> {
     await redisClient.set(
       `guest:${guestId}`,
@@ -34,7 +30,6 @@ export const redis = {
     await redisClient.expire(`guest:${guestId}`, ttl);
   },
 
-  // Game state management
   async setGameState(gameId: string, state: any): Promise<void> {
     await redisClient.set(gameStateKey(gameId), JSON.stringify(state));
   },
@@ -73,7 +68,6 @@ export const redis = {
     }
   },
 
-  // Utility methods
   async deleteKey(key: string): Promise<void> {
     await redisClient.del(key);
   },

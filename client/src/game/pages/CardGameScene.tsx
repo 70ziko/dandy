@@ -43,10 +43,8 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
     const initializeGame = async () => {
       try {
         setIsLoading(true);
-        // Join the game (will be used with WebSocket later)
         await api.joinGame(tableId);
         
-        // Draw initial cards
         const cards = await api.drawCards(tableId);
         // TODO: Update hand with cards
         
@@ -59,7 +57,6 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
 
     initializeGame();
 
-    // Cleanup when leaving the game
     return () => {
       if (tableId) {
         api.leaveGame(tableId).catch(console.error);
