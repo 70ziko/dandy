@@ -15,11 +15,10 @@ export function GuestProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Try to get guest ID from localStorage
     const storedGuestId = localStorage.getItem(GUEST_ID_KEY);
     if (storedGuestId) {
       setGuestId(storedGuestId);
-    }
+    } 
     setIsLoading(false);
   }, []);
 

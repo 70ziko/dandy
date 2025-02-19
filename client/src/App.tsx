@@ -6,15 +6,12 @@ import CardGame from "game/pages/CardGameScene";
 import { GuestProvider, useGuest } from "./contexts/GuestContext";
 import { api } from "./services/api";
 
-// Component to handle guest ID synchronization with API
 const GuestSync: React.FC = () => {
   const { guestId, setGuestId } = useGuest();
 
   useEffect(() => {
-    // Update API service when guest ID changes
     api.setGuestId(guestId);
 
-    // Listen for guest ID updates from API responses
     const handleGuestIdUpdate = (event: CustomEvent<string>) => {
       setGuestId(event.detail);
     };
@@ -29,7 +26,6 @@ const GuestSync: React.FC = () => {
   return null;
 };
 
-// Main app content wrapped with router
 const AppContent: React.FC = () => {
   const { isLoading } = useGuest();
 
@@ -42,7 +38,7 @@ const AppContent: React.FC = () => {
       <GuestSync />
       <Routes>
         <Route path="/" element={<MenuScenePage />} />
-        <Route path="/game" element={<CardGame />} />
+        <Route path="/game/:tableId" element={<CardGame />} />
       </Routes>
     </>
   );

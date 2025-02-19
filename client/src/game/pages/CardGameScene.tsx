@@ -38,6 +38,8 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
 
   // Initialize game and draw cards
   useEffect(() => {
+    console.log('tableId:', tableId);
+    console.log('guestId:', guestId);
     if (!tableId || !guestId) return;
 
     const initializeGame = async () => {
@@ -45,7 +47,7 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
         setIsLoading(true);
         await api.joinGame(tableId);
         
-        const cards = await api.drawCards(tableId);
+        await api.drawCards(tableId);
         // TODO: Update hand with cards
         
         setIsLoading(false);
