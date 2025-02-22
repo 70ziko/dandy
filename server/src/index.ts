@@ -8,16 +8,25 @@ import { redis } from "./services/redis";
 import { mongodb } from "./services/mongodb";
 import { websocket } from "./services/websocket";
 import { guestAuth, rateLimiter, validateRequest } from "./middleware/auth";
+import { guestService } from "./services/guest";
 
 const app = express();
 const server = createServer(app);
 const port = process.env.PORT || 3001;
 
-// Initialize WebSocket
 websocket.initialize(server);
 
-// Apply middlewares
+app.options("*", (req: Request, res: Response) => {
+  setCorsHeaders(res);
+  res.status(204).end();
+});
+
 app.use((req: Request, res: Response, next) => {
+  setCorsHeaders(res);
+  next();
+});
+
+function setCorsHeaders(res: Response): void {
   res.header("Access-Control-Allow-Origin", process.env.CLIENT_URL || "http://localhost:3000");
   res.header(
     "Access-Control-Allow-Headers",
@@ -25,16 +34,33 @@ app.use((req: Request, res: Response, next) => {
   );
   res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.header("Access-Control-Allow-Credentials", "true");
-  next();
-});
+  res.header("Access-Control-Expose-Headers", "X-Guest-Id");
+}
 
-// Apply rate limiting
 app.use(rateLimiter());
 
-// Guest authentication middleware
+// Guest endpoints - needs to be before guest auth middleware
+app.get("/guest", async (req: Request, res: Response) => {
+  try {
+    console.log('Guest request:', req.headers);
+    const existingGuestId = req.headers["x-guest-id"] as string;
+    if (existingGuestId && await guestService.validateGuest(existingGuestId)) {
+      res.json({ guestId: existingGuestId });
+      return;
+    }
+
+    const guestId = await guestService.createGuest();
+    console.log('New guest ID:', guestId);
+    res.header("X-Guest-Id", guestId);
+    res.json({ guestId });
+  } catch (error) {
+    console.error('Error in guest endpoint:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 app.use(guestAuth);
 
-// Routes that require guest validation
 app.use("/:tableId/*", validateRequest);
 
 const drawHandler: RequestHandler<DrawParams> = async (req, res) => {
@@ -42,7 +68,6 @@ const drawHandler: RequestHandler<DrawParams> = async (req, res) => {
     const { tableId } = req.params;
     const guestId = req.headers["x-guest-id"] as string;
 
-    // Get game state from Redis
     let gameState = await redis.getGameState(tableId);
     
     if (!gameState) {
@@ -55,17 +80,14 @@ const drawHandler: RequestHandler<DrawParams> = async (req, res) => {
       await redis.setGameState(tableId, gameState);
     }
 
-    // Check if player already has cards
     const playerState = await redis.getPlayerState(guestId);
     if (playerState?.cards) {
       res.json(signData(playerState.cards));
       return;
     }
 
-    // Draw new cards
     const cards = drawRandomCards(5, gameState.deck);
     
-    // Update game and player state
     gameState.players.push(guestId);
     if (!gameState.currentTurn) {
       gameState.currentTurn = guestId;
@@ -116,11 +138,10 @@ const actionHandler: RequestHandler<ActionParams, any, ActionBody> = async (req,
 app.get<DrawParams>("/:tableId/draw", drawHandler);
 app.post<ActionParams, any, ActionBody>("/:tableId/action", express.json(), actionHandler);
 
-// Start the server
+
 server.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
 
-  // Handle graceful shutdown
   process.on('SIGTERM', async () => {
     console.log('SIGTERM received. Shutting down gracefully...');
     await mongodb.close();

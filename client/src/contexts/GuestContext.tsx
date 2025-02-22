@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import api from '../services/api';
 
 interface GuestContextType {
   guestId: string | null;
@@ -15,11 +16,34 @@ export function GuestProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const storedGuestId = localStorage.getItem(GUEST_ID_KEY);
-    if (storedGuestId) {
-      setGuestId(storedGuestId);
-    } 
-    setIsLoading(false);
+    const initializeGuest = async () => {
+      try {
+        const storedGuestId = localStorage.getItem(GUEST_ID_KEY);
+        
+        if (storedGuestId) {
+          setGuestId(storedGuestId);
+          api.setGuestId(storedGuestId);
+        } else {
+          const newGuestId = await api.getGuestId();
+          updateGuestId(newGuestId);
+        }
+      } catch (error) {
+        console.error('Failed to initialize guest:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializeGuest();
+
+    const handleGuestIdUpdate = (event: CustomEvent<string>) => {
+      updateGuestId(event.detail);
+    };
+
+    window.addEventListener('guestIdUpdated', handleGuestIdUpdate as EventListener);
+    return () => {
+      window.removeEventListener('guestIdUpdated', handleGuestIdUpdate as EventListener);
+    };
   }, []);
 
   const updateGuestId = (id: string) => {

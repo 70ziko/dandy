@@ -9,7 +9,6 @@ export async function guestAuth(
   try {
     const guestId = req.headers['x-guest-id'] as string;
 
-    // If no guest ID provided, create a new guest
     if (!guestId) {
       const newGuestId = await guestService.createGuest();
       res.setHeader('X-Guest-Id', newGuestId);
@@ -17,7 +16,6 @@ export async function guestAuth(
       return next();
     }
 
-    // Validate existing guest
     const isValid = await guestService.validateGuest(guestId);
     if (!isValid) {
       const newGuestId = await guestService.createGuest();
@@ -26,7 +24,6 @@ export async function guestAuth(
       return next();
     }
 
-    // Guest is valid, refresh their session
     await guestService.refreshSession(guestId);
     next();
   } catch (error) {
@@ -54,13 +51,11 @@ export function rateLimiter(
     const now = Date.now();
     const requestData = requests.get(guestId) || { count: 0, lastReset: now };
 
-    // Reset counter if window has passed
     if (now - requestData.lastReset > windowMs) {
       requestData.count = 0;
       requestData.lastReset = now;
     }
 
-    // Increment request count
     requestData.count++;
     requests.set(guestId, requestData);
 
@@ -85,6 +80,7 @@ export function validateRequest(
     res.status(400).json({ error: 'Invalid guest ID format' });
     return;
   }
+  // TODO: Actually validate the guest ID with the guest service
 
   next();
 }

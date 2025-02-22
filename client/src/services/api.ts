@@ -1,12 +1,23 @@
 import type { Card } from '../game/types';
 
-const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+const BASE_URL = process.env.API_URL || 'http://localhost:3001';
 
 class ApiService {
   private guestId: string | null = null;
 
   setGuestId(id: string | null) {
     this.guestId = id;
+  }
+
+  async getGuestId(): Promise<string> {
+    const response = await fetch(`${BASE_URL}/guest`, {
+      method: 'GET',
+      headers: this.getHeaders(),
+      credentials: 'include',
+    });
+
+    const result = await this.handleResponse<{ guestId: string }>(response);
+    return result.guestId;
   }
 
   private getHeaders(): HeadersInit {
@@ -27,12 +38,9 @@ class ApiService {
       throw new Error(error.message || 'Network response was not ok');
     }
 
-    // Check for guest ID in response headers
     const newGuestId = response.headers.get('X-Guest-Id');
     if (newGuestId && newGuestId !== this.guestId) {
-      // Update the guest ID if it's different
       this.guestId = newGuestId;
-      // Notify any listeners about the new guest ID
       window.dispatchEvent(new CustomEvent('guestIdUpdated', { detail: newGuestId }));
     }
 
@@ -46,6 +54,7 @@ class ApiService {
       credentials: 'include',
     });
 
+    console.log('drawCards response:', response);
     return this.handleResponse<Card[]>(response);
   }
 
@@ -61,12 +70,12 @@ class ApiService {
   }
 
   async joinGame(tableId: string): Promise<void> {
-    // Will be implemented when WebSocket functionality is added
+    // TODO: Implement WebSocket functionality
     console.log('Joining game:', tableId);
   }
 
   async leaveGame(tableId: string): Promise<void> {
-    // Will be implemented when WebSocket functionality is added
+    // TODO: Implement WebSocket functionality
     console.log('Leaving game:', tableId);
   }
 }

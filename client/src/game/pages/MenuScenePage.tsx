@@ -58,7 +58,7 @@ const MenuScenePage: React.FC = () => {
           scene,
           alt: "PLAY",
           onClick: () => {
-            navigate("/game");
+            navigate("/game/123");
           },
           position: new THREE.Vector3(-1, -0.5, 0),
           rotation: new THREE.Euler(0, 0, 0),
