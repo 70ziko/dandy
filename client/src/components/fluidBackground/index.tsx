@@ -80,7 +80,7 @@ const FluidBackground = forwardRef<FluidBackgroundHandle>((_, ref) => {
       const relY = 1.0 - y / canvas.clientHeight;
 
       // Scale velocity based on screen dimensions
-      const relVelX = (velocityX / canvas.clientWidth) * aspectRef.current.x;
+      const relVelX = -(velocityX / canvas.clientWidth) * aspectRef.current.x;
       const relVelY = -(velocityY / canvas.clientHeight);
 
       if (inputTouchesRef.current.length === 0) {

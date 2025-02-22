@@ -290,6 +290,7 @@ export class Card {
   }
 
   public hover(): void {
+    if (this.isHovered) return;
     this.isHovered = true;
 
     if (this.floatingAnimation) {
