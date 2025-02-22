@@ -79,6 +79,8 @@ export class Hand {
 
   public toggleHolding(): void {
     this.isHolding = !this.isHolding;
+    this.cards.forEach((card) => card.stopFloatingAnimation());
+    
     const targetPosition = this.isHolding
       ? this.holdingPosition
       : this.lyingPosition;
