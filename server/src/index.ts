@@ -1,14 +1,17 @@
 import express from "express";
 import { createServer } from "http";
-import type { Request, Response, RequestHandler } from "express";
-import type { GameStates, DrawParams, ActionParams, ActionBody } from "./types";
-import { initializeDeck, drawRandomCards } from "./core";
-import { signData } from "./utils";
-import { redis } from "./services/redis";
+import type { Request, Response } from "express";
+
 import { mongodb } from "./services/mongodb";
 import { websocket } from "./services/websocket";
 import { guestAuth, rateLimiter, validateRequest } from "./middleware/auth";
-import { guestService } from "./services/guest";
+
+import type { DrawParams, ActionParams, ActionBody } from "./types";
+import { router as guestRouter } from "./routers/guest.router";
+import { errorLog, prettyLog } from "./lib/loggers";
+import { drawHandler, actionHandler } from "./lib/game.controllers";
+import { errorHandlerPlugin } from "./lib/error-handler.plugin";
+import { notFoundPlugin } from "./lib/not-found.plugin";
 
 const app = express();
 const server = createServer(app);
@@ -39,111 +42,22 @@ function setCorsHeaders(res: Response): void {
 
 app.use(rateLimiter());
 
-// Guest endpoints - needs to be before guest auth middleware
-app.get("/guest", async (req: Request, res: Response) => {
-  try {
-    console.log('Guest request:', req.headers);
-    const existingGuestId = req.headers["x-guest-id"] as string;
-    if (existingGuestId && await guestService.validateGuest(existingGuestId)) {
-      res.json({ guestId: existingGuestId });
-      return;
-    }
-
-    const guestId = await guestService.createGuest();
-    console.log('New guest ID:', guestId);
-    res.header("X-Guest-Id", guestId);
-    res.json({ guestId });
-  } catch (error) {
-    console.error('Error in guest endpoint:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+app.use(guestRouter);
 
 app.use(guestAuth);
 
 app.use("/:tableId/*", validateRequest);
 
-const drawHandler: RequestHandler<DrawParams> = async (req, res) => {
-  try {
-    const { tableId } = req.params;
-    const guestId = req.headers["x-guest-id"] as string;
-
-    let gameState = await redis.getGameState(tableId);
-    
-    if (!gameState) {
-      gameState = {
-        players: [],
-        deck: initializeDeck(),
-        currentTurn: null,
-        turnCounter: 0,
-      };
-      await redis.setGameState(tableId, gameState);
-    }
-
-    const playerState = await redis.getPlayerState(guestId);
-    if (playerState?.cards) {
-      res.json(signData(playerState.cards));
-      return;
-    }
-
-    const cards = drawRandomCards(5, gameState.deck);
-    
-    gameState.players.push(guestId);
-    if (!gameState.currentTurn) {
-      gameState.currentTurn = guestId;
-    }
-    await redis.setGameState(tableId, gameState);
-    
-    await redis.setPlayerState(guestId, { cards, tableId });
-
-    res.json(signData(cards));
-  } catch (error) {
-    console.error('Error in draw endpoint:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-const actionHandler: RequestHandler<ActionParams, any, ActionBody> = async (req, res) => {
-  try {
-    const { tableId } = req.params;
-    const { action, value } = req.body;
-    const guestId = req.headers["x-guest-id"] as string;
-
-    const gameState = await redis.getGameState(tableId);
-    if (!gameState) {
-      res.status(404).json({ error: 'Game not found' });
-      return;
-    }
-
-    // TODO: Implement game logic
-    // This would handle actions like:
-    // - Calling poker figures
-    // - Challenging calls
-    // - Calculating scores
-
-    // Emit action to all players in the game via WebSocket
-    websocket.emitToGame(tableId, 'gameAction', {
-      playerId: guestId,
-      action,
-      value
-    });
-
-    res.json({ status: "action received" });
-  } catch (error) {
-    console.error('Error in action endpoint:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
 app.get<DrawParams>("/:tableId/draw", drawHandler);
 app.post<ActionParams, any, ActionBody>("/:tableId/action", express.json(), actionHandler);
 
+app.use(notFoundPlugin).use(errorHandlerPlugin);
 
 server.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
+  prettyLog(`Server running at http://localhost:${port}`);
 
   process.on('SIGTERM', async () => {
-    console.log('SIGTERM received. Shutting down gracefully...');
+    errorLog('SIGTERM received. Shutting down gracefully...');
     await mongodb.close();
     process.exit(0);
   });
