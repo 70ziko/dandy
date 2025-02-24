@@ -1,70 +1,133 @@
-# Getting Started with Create React App
+# Dandy - Multiplayer Card Game
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A modern multiplayer card game featuring real-time fluid dynamics background effects, built with React and Three.js.
 
-## Available Scripts
+## 🎮 Features
 
-In the project directory, you can run:
+- Real-time multiplayer card game mechanics
+- Interactive fluid simulation background using WebGL shaders
+- Guest player support
+- Real-time game state synchronization
+- Responsive card and deck animations
 
-### `npm start`
+## 🔧 Technology Stack
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### Frontend
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+- React 19
+- Three.js for WebGL rendering
+- TypeScript
+- GSAP & React Spring for animations
+- React Router for navigation
 
-### `npm test`
+### Backend
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- Bun runtime
+- Express.js
+- Socket.IO for real-time communication
+- TypeScript
 
-### `npm run build`
+### Infrastructure
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+- **MongoDB** for game state persistence
+- **Redis** for session management and caching
+- **Docker** and *Docker Compose* for containerization
+- **WebSockets** for real-time game updates
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## 🚀 Quick Start
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### Prerequisites
 
-### `npm run eject`
+- Docker and Docker Compose
+- Node.js 18+ (for local development)
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### Running with Docker
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+```bash
+# Clone the repository
+git clone [repository-url]
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+# Start all services
+docker compose up
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+The application will be available at:
 
-## Learn More
+- Frontend: <http://localhost:3000>
+- Backend API: <http://localhost:3001>
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### Local Development
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+#### Client
 
-### Code Splitting
+```bash
+cd client
+bun install
+bun start
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+#### Server
 
-### Analyzing the Bundle Size
+```bash
+cd server
+bun install
+bun start
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+or use `npm` with the same commands.
 
-### Making a Progressive Web App
+## 🏗 Architecture
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+The project follows a microservices architecture:
 
-### Advanced Configuration
+- **Client Service**: React application with Three.js for cards and webGL for fluid simulation
+- **Game Server**: Handles game logic and real-time communication
+- **MongoDB**: Stores game state and user data
+- **Redis**: Manages sessions and provides caching
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+## 🔒 Environment Variables
 
-### Deployment
+### Frontend Configuration
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+- `API_URL`: Backend API URL
 
-### `npm run build` fails to minify
+### Backend Configuration
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+- `MONGODB_URI`: MongoDB connection string
+- `REDIS_URL`: Redis connection string
+
+## 🎨 Features in Detail
+
+### Fluid Background
+
+- Real-time WebGL fluid simulation
+- Interactive touch/mouse input
+- Multiple render passes for complex fluid effects
+- Custom shader implementations
+
+### Game Mechanics
+
+- Deck management system
+- Real-time card animations
+- Multiplayer synchronization
+- Guest player support
+
+## 📁 Project Structure
+
+```bash
+├── client/                  # Frontend application
+│   ├── src/
+│   │   ├── components/     # React components
+│   │   │   └── fluidBackground/  # WebGL fluid simulation
+│   │   ├── game/          # Game-specific components
+│   │   ├── contexts/      # React contexts
+│   │   └── services/      # API services
+├── server/                 # Backend application
+│   ├── src/
+│   │   ├── lib/          # Core functionality
+│   │   ├── services/     # Business logic
+│   │   ├── middleware/   # Express middleware
+│   │   ├── routers/     # API routes
+│   │   └── types/       # TypeScript types
+└── docker-compose.yml     # Container orchestration
+```
