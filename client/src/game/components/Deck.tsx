@@ -25,7 +25,13 @@ export class Deck {
 
   private createDeck(position: THREE.Vector3, rotation: THREE.Euler): void {
     const geometry = new THREE.BoxGeometry(1, 1.618, this.cardsInDeck * 0.01);
-    const material = new THREE.MeshBasicMaterial({ color: 0x0000ff });
+
+    const textureLoader = new THREE.TextureLoader();
+    const reverseTexture = textureLoader.load("/assets/black-reverse.jpg");
+
+    const material = new THREE.MeshBasicMaterial({ 
+      map: reverseTexture
+    });
     const card = new THREE.Mesh(geometry, material);
     card.position.copy(position);
     card.rotation.copy(rotation);
