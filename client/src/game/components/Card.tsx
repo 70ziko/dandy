@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import gsap from "gsap";
-import { FluidBackgroundHandle } from "components/fluidBackground";
+import { FluidBackgroundHandle } from "../../components/fluidBackground";
 
 interface CardConstructorParams {
   scene: THREE.Scene;
@@ -25,9 +25,9 @@ export class Card {
   protected edgePoints: THREE.Vector3[];
   protected lastPosition: THREE.Vector3;
   protected lastTime: number;
-  protected numInterpolationPoints: number = 8;
-  protected lastUpdateTime: number = 0;
-  protected updateInterval: number = 16; // ~60fps in milliseconds
+  protected numInterpolationPoints = 8;
+  protected lastUpdateTime = 0;
+  protected updateInterval = 16; // ~60fps in milliseconds
 
   constructor({
     scene,

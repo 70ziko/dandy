@@ -1,6 +1,6 @@
 import gsap from "gsap";
 import * as THREE from "three";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 // import { useParams } from "react-router-dom";
 import { MotionPathPlugin } from "gsap/MotionPathPlugin";
 import { Hand } from "../components/Hand";
