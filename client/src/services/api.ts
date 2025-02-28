@@ -1,4 +1,4 @@
-import type { Card } from '../game/types';
+import type { Card } from '../types';
 
 const BASE_URL = process.env.API_URL || 'http://localhost:3001';
 

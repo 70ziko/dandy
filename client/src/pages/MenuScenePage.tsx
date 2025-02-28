@@ -6,7 +6,7 @@ import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry";
 import FluidBackground, {
   FluidBackgroundHandle,
-} from "../../components/fluidBackground";
+} from "../fluidBackground";
 import { GuiCard } from "../components/Card";
 
 const MenuScenePage: React.FC = () => {

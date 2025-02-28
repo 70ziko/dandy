@@ -1,8 +1,8 @@
 import React, { useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-import MenuScenePage from "./game/pages/MenuScenePage";
-import CardGame from "./game/pages/CardGameScene";
+import MenuScenePage from "./pages/MenuScenePage";
+import CardGame from "./pages/CardGameScene";
 import { GuestProvider, useGuest } from "./contexts/GuestContext";
 import { api } from "./services/api";
 

@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import gsap from "gsap";
-import { FluidBackgroundHandle } from "../../components/fluidBackground";
+import { FluidBackgroundHandle } from "../fluidBackground";
 
 interface CardConstructorParams {
   scene: THREE.Scene;
