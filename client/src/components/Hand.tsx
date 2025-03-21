@@ -140,7 +140,7 @@ export class Hand {
     });
   }
 
-  public checkCards() {
+  public throwCards() {
     const tableCenter = new THREE.Vector3(0, -5, 0);
     const tableSize = 10; // Half size, so cards land within +/- tableSize
 

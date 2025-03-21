@@ -28,9 +28,9 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
   const handRef = useRef<Hand | null>(null);
   const animationFrameRef = useRef<number | void>(null);
 
-  const checkCardsHandler = useCallback(() => {
+  const throwCardsHandler = useCallback(() => {
     if (handRef.current) {
-      handRef.current.checkCards();
+      handRef.current.throwCards();
     }
   }, []);
 
@@ -127,7 +127,7 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
       table.position.y = -5;
       scene.add(table);
 
-      new Deck({ scene, position: new THREE.Vector3(0, -4, 0) });
+      new Deck({ scene, position: new THREE.Vector3(0, -4.87, 0) });
 
       scene.add(new THREE.AmbientLight(0xffffff, 0.5));
       const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
@@ -356,7 +356,7 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
 
   const onkeydown = useCallback((event: KeyboardEvent) => {
     if (event.key.toUpperCase() === "C") {
-      checkCardsHandler();
+      throwCardsHandler();
     } else if (event.key.toUpperCase() === "H") {
       toggleHandHoldingHandler();
     } else if (event.key.toUpperCase() === "D") {
@@ -372,7 +372,7 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
         return !prev;
       });
     }
-  }, [checkCardsHandler, toggleHandHoldingHandler]);
+  }, [throwCardsHandler, toggleHandHoldingHandler]);
 
   useEffect(() => {
     window.addEventListener("keydown", onkeydown);
