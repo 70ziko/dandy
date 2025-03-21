@@ -1,6 +1,9 @@
 import * as THREE from "three";
 import { Card } from "./Card";
 import gsap from "gsap";
+import { MotionPathPlugin } from "gsap/MotionPathPlugin";
+
+gsap.registerPlugin(MotionPathPlugin);
 
 interface HandConstructorParams {
   scene: THREE.Scene;
@@ -140,7 +143,29 @@ export class Hand {
     });
   }
 
+  public rethrow: boolean = true;
+  private cardsThrown: boolean = false;
+  private initialCardPositions: { position: THREE.Vector3, rotation: THREE.Euler }[] = [];
+
   public throwCards() {
+    if (this.cardsThrown && !this.rethrow) {
+      console.log("Cards already thrown, cannot throw again");
+      return;
+    }
+    
+    if (!this.cardsThrown) {
+      this.initialCardPositions = this.cards.map(card => ({
+        position: card.getMesh().position.clone(),
+        rotation: card.getMesh().rotation.clone()
+      }));
+      this.performThrow();
+    } 
+    else if (this.rethrow) {
+      this.returnCards();
+    }
+  }
+
+  private performThrow() {
     const tableCenter = new THREE.Vector3(0, -5, 0);
     const tableSize = 10; // Half size, so cards land within +/- tableSize
 
@@ -153,7 +178,7 @@ export class Hand {
 
       const landingPosition = new THREE.Vector3(x, tableCenter.y, z);
       const targetRotation = new THREE.Euler(
-        card.getMesh().rotation.x + Math.PI / 3,
+        card.getMesh().rotation.x - Math.PI / 3,
         card.getMesh().rotation.y,
         card.getMesh().rotation.z,
         "XYZ"
@@ -161,7 +186,7 @@ export class Hand {
 
       const controlPoint = new THREE.Vector3(
         card.getMesh().position.x,
-        card.getMesh().position.y + 2, // Adjust for arc height
+        card.getMesh().position.y + 0.5, // Adjust for arc height
         card.getMesh().position.z
       );
 
@@ -171,7 +196,57 @@ export class Hand {
         landingPosition
       ];
       const tl = gsap.timeline();
+      
+      tl.to(card.getMesh().position, {
+        motionPath: {
+          path: path,
+          type: "quadratic",
+          autoRotate: false
+        },
+        duration: 0.5,
+        ease: "power4.easeOut"
+      }, 0)
+      .to(card.getMesh().rotation, {
+        x: targetRotation.x,
+        y: targetRotation.y,
+        z: targetRotation.z,
+        duration: 0.3,
+        ease: "power4.easeIn",
+        onComplete: () => {
+          console.log(`Card ${index} animation complete`);
+          card.setBasePosition(landingPosition);
+          card.getMesh().position.copy(landingPosition);
+          card.setBaseRotation(targetRotation);
+          card.getMesh().rotation.copy(targetRotation);
+        }
+      }, 0);
+      card.stopFloatingAnimation();
+    });
+    
+    this.cardsThrown = true;
+  }
 
+  private returnCards() {
+    console.log("Returning cards to initial positions");
+    
+    this.cards.forEach((card, index) => {
+      const initialPos = this.initialCardPositions[index].position;
+      const initialRot = this.initialCardPositions[index].rotation;
+      
+      const controlPoint = new THREE.Vector3(
+        card.getMesh().position.x,
+        card.getMesh().position.y + 2,
+        card.getMesh().position.z
+      );
+
+      const path = [
+        card.getMesh().position,
+        controlPoint,
+        initialPos
+      ];
+      
+      const tl = gsap.timeline();
+      
       tl.to(card.getMesh().position, {
         motionPath: {
           path: path,
@@ -179,22 +254,25 @@ export class Hand {
           autoRotate: false
         },
         duration: 1,
-        ease: "power2.out",
-      }, 0) 
+        ease: "power2.in"
+      }, 0)
       .to(card.getMesh().rotation, {
-        z: targetRotation.y,
+        x: initialRot.x,
+        y: initialRot.y,
+        z: initialRot.z,
         duration: 1,
-        ease: "power2.out",
+        ease: "power2.in",
         onComplete: () => {
-          console.log(`Card ${index} animation complete`);
-          card.setBasePosition(landingPosition);
-          card.getMesh().position.copy(landingPosition);
-          card.setBaseRotation(targetRotation);
-          card.getMesh().rotation.copy(targetRotation);
-        },
-      }, 0); 
-      card.stopFloatingAnimation();
+          console.log(`Card ${index} return complete`);
+          card.setBasePosition(initialPos);
+          card.getMesh().position.copy(initialPos);
+          card.setBaseRotation(initialRot);
+          card.getMesh().rotation.copy(initialRot);
+        }
+      }, 0);
     });
+    
+    this.cardsThrown = false;
   }
 
   public remove(): void {
