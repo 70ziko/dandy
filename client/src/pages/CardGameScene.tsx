@@ -1,6 +1,6 @@
 import gsap from "gsap";
 import * as THREE from "three";
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 // import { useParams } from "react-router-dom";
 import { MotionPathPlugin } from "gsap/MotionPathPlugin";
 import { Hand } from "../components/Hand";
@@ -8,12 +8,16 @@ import { Deck } from "../components/Deck";
 // import { useGuest } from "../../contexts/GuestContext";
 // import { api } from "../../services/api";
 import type { SceneRefs, Props, Card } from "../types";
+import { CameraController } from "../utils/CameraController";
 
 gsap.registerPlugin(MotionPathPlugin);
 
 // type GameParams = Record<'tableId', string | undefined>;
 
 const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
+  // Debug camera controls
+  const [cameraControlsEnabled, setCameraControlsEnabled] = useState(false);
+  const cameraControllerRef = useRef<CameraController | null>(null);
   // const { tableId } = useParams<GameParams>();
   // const { guestId } = useGuest();
   // const [error, setError] = useState<string | null>(null);
@@ -306,6 +310,14 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
     setup();
 
     if (!sceneRef.current) return;
+    
+    // Initialize camera controller
+    if (sceneRef.current.renderer.domElement) {
+      cameraControllerRef.current = new CameraController(
+        sceneRef.current.camera,
+        sceneRef.current.renderer.domElement
+      );
+    }
     handRef.current = new Hand({
       scene: sceneRef.current.scene,
       numCards,
@@ -333,6 +345,9 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
+      if (cameraControllerRef.current) {
+        cameraControllerRef.current.dispose();
+      }
       cleanupScene();
       window.removeEventListener("resize", handleResize);
       cleanupRaycaster();
@@ -344,6 +359,18 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
       checkCardsHandler();
     } else if (event.key.toUpperCase() === "H") {
       toggleHandHoldingHandler();
+    } else if (event.key.toUpperCase() === "D") {
+      // Toggle debug camera controls
+      setCameraControlsEnabled(prev => {
+        if (cameraControllerRef.current) {
+          if (!prev) {
+            cameraControllerRef.current.enable();
+          } else {
+            cameraControllerRef.current.disable();
+          }
+        }
+        return !prev;
+      });
     }
   }, [checkCardsHandler, toggleHandHoldingHandler]);
 
