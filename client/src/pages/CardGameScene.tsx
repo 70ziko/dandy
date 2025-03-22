@@ -1,27 +1,27 @@
 import gsap from "gsap";
 import * as THREE from "three";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-// import { useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { MotionPathPlugin } from "gsap/MotionPathPlugin";
 import { Hand } from "../components/Hand";
 import { Deck } from "../components/Deck";
-// import { useGuest } from "../../contexts/GuestContext";
-// import { api } from "../../services/api";
+import { useGuest } from "../contexts/GuestContext";
+import { api } from "../services/api";
 import type { SceneRefs, Props, Card } from "../types";
 import { CameraController } from "../utils/CameraController";
 
 gsap.registerPlugin(MotionPathPlugin);
 
-// type GameParams = Record<'tableId', string | undefined>;
+type GameParams = Record<'tableId', string | undefined>;
 
 const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
   // Debug camera controls
   const [_cameraControlsEnabled, setCameraControlsEnabled] = useState(false);
   const cameraControllerRef = useRef<CameraController | null>(null);
-  // const { tableId } = useParams<GameParams>();
-  // const { guestId } = useGuest();
-  // const [error, setError] = useState<string | null>(null);
-  // const [isLoading, setIsLoading] = useState(true);
+  const { tableId } = useParams<GameParams>();
+  const { guestId } = useGuest();
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const mountRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<SceneRefs | null>(null);
@@ -40,35 +40,35 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
     }
   }, []);
 
-  // useEffect(() => {
+  useEffect(() => {
   // TODO: properly initialize game state
-  //   console.log('tableId:', tableId);
-  //   console.log('guestId:', guestId);
-  //   if (!tableId || !guestId) return;
+    console.log('tableId:', tableId);
+    console.log('guestId:', guestId);
+    if (!tableId || !guestId) return;
 
-  //   const initializeGame = async () => {
-  //     try {
-  //       setIsLoading(true);
-  //       await api.joinGame(tableId);
+    const initializeGame = async () => {
+      try {
+        setIsLoading(true);
+        await api.joinGame(tableId);
         
-  //       await api.drawCards(tableId);
-  //       // TODO: Update hand with cards
+        await api.drawCards(tableId);
+        // TODO: Update hand with cards
         
-  //       setIsLoading(false);
-  //     } catch (err) {
-  //       setError(err instanceof Error ? err.message : 'Failed to initialize game');
-  //       setIsLoading(false);
-  //     }
-  //   };
+        setIsLoading(false);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to initialize game');
+        setIsLoading(false);
+      }
+    };
 
-  //   initializeGame();
+    initializeGame();
 
-  //   // return () => {
-  //   //   if (tableId) {
-  //   //     api.leaveGame(tableId).catch(console.error);
-  //   //   }
-  //   // };
-  // }, [tableId, guestId]);
+    return () => {
+      if (tableId) {
+        api.leaveGame(tableId).catch(console.error);
+      }
+    };
+  }, [tableId, guestId]);
 
   useEffect(() => {
     const mountElement = mountRef.current;

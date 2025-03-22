@@ -213,7 +213,6 @@ export class Hand {
         duration: 0.3,
         ease: "power4.easeIn",
         onComplete: () => {
-          console.log(`Card ${index} animation complete`);
           card.setBasePosition(landingPosition);
           card.getMesh().position.copy(landingPosition);
           card.setBaseRotation(targetRotation);
@@ -227,8 +226,6 @@ export class Hand {
   }
 
   private returnCards() {
-    console.log("Returning cards to initial positions");
-    
     this.cards.forEach((card, index) => {
       const initialPos = this.initialCardPositions[index].position;
       const initialRot = this.initialCardPositions[index].rotation;
