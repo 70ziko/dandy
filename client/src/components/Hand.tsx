@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { Card } from "./Card";
 import gsap from "gsap";
 import { MotionPathPlugin } from "gsap/MotionPathPlugin";
+import { CustomEase } from "gsap/all";
 
 gsap.registerPlugin(MotionPathPlugin);
 
@@ -203,8 +204,10 @@ export class Hand {
           type: "quadratic",
           autoRotate: false
         },
-        duration: 0.5,
-        ease: "power4.easeOut"
+        duration: 1,
+        ease: CustomEase.create(
+          "custom", "M0,0 C0.084,0.61 0.151,0.858 0.205,0.925 0.265,1 0.374,1 1,1 "
+        )
       }, 0)
       .to(card.getMesh().rotation, {
         x: targetRotation.x,
@@ -260,7 +263,6 @@ export class Hand {
         duration: 1,
         ease: "power2.in",
         onComplete: () => {
-          console.log(`Card ${index} return complete`);
           card.setBasePosition(initialPos);
           card.getMesh().position.copy(initialPos);
           card.setBaseRotation(initialRot);
