@@ -170,8 +170,8 @@ export class Hand {
     const tableSize = 10; // Half size, so cards land within +/- tableSize
 
     this.cards.forEach((card, index) => {
-      let x = this.generateNormalRandom(tableCenter.x, 0.5);
-      let z = this.generateNormalRandom(tableCenter.z + 2, 0.5);
+      let x = this.generateNormalRandom(card.getMesh().position.x, 0.5);
+      let z = this.generateNormalRandom(tableCenter.z + 2, 0.2);
 
       x = Math.max(Math.min(x, tableSize), -tableSize);
       z = Math.max(Math.min(z, tableSize), -tableSize);
@@ -186,8 +186,8 @@ export class Hand {
 
       const controlPoint = new THREE.Vector3(
         card.getMesh().position.x,
-        card.getMesh().position.y + 0.5, // arc height
-        card.getMesh().position.z
+        card.getMesh().position.y - 1, // concave height
+        card.getMesh().position.z - 1
       );
 
       const path = [

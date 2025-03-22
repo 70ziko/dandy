@@ -16,7 +16,7 @@ gsap.registerPlugin(MotionPathPlugin);
 
 const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
   // Debug camera controls
-  const [cameraControlsEnabled, setCameraControlsEnabled] = useState(false);
+  const [_cameraControlsEnabled, setCameraControlsEnabled] = useState(false);
   const cameraControllerRef = useRef<CameraController | null>(null);
   // const { tableId } = useParams<GameParams>();
   // const { guestId } = useGuest();
@@ -117,7 +117,7 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
       renderer.setClearColor(0x1a1a1a);
       mountElement.appendChild(renderer.domElement);
 
-      const tableGeometry = new THREE.PlaneGeometry(24, 24);
+      const tableGeometry = new THREE.PlaneGeometry(32, 32);
       const tableMaterial = new THREE.MeshStandardMaterial({
         color: 0x004400,
         side: THREE.DoubleSide,
@@ -134,7 +134,7 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
       directionalLight.position.set(0, 5, 5);
       scene.add(directionalLight);
 
-      camera.position.set(0, 3, 10);
+      camera.position.set(0, 3, 15);
       camera.lookAt(0, -3, 0);
       sceneRef.current = { scene, camera, renderer };
     };
@@ -321,7 +321,7 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
     handRef.current = new Hand({
       scene: sceneRef.current.scene,
       numCards,
-      holdingPosition: new THREE.Vector3(0, -4, 7),
+      holdingPosition: new THREE.Vector3(0, -4, 10),
     });
 
     const cleanupRaycaster = setupRaycaster();
