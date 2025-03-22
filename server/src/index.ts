@@ -42,9 +42,8 @@ function setCorsHeaders(res: Response): void {
 
 app.use(rateLimiter());
 
-app.use(guestRouter);
-
 app.use(guestAuth);
+app.use(guestRouter);
 
 app.use("/:tableId/*", validateRequest);
 

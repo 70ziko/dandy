@@ -75,7 +75,6 @@ class ApiService {
   }
 
   async leaveGame(tableId: string): Promise<void> {
-    // TODO: Implement WebSocket functionality
     console.log('Leaving game:', tableId);
   }
 }

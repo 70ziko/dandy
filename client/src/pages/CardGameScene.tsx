@@ -41,6 +41,7 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
   }, []);
 
   // useEffect(() => {
+  // TODO: properly initialize game state
   //   console.log('tableId:', tableId);
   //   console.log('guestId:', guestId);
   //   if (!tableId || !guestId) return;

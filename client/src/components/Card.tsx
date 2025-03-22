@@ -10,6 +10,7 @@ interface CardConstructorParams {
 }
 
 export class Card {
+  // TODO: Add a value and fetch texture for the card
   protected scene: THREE.Scene;
   protected mesh: THREE.Mesh;
   protected hitbox: THREE.Mesh;

@@ -31,7 +31,7 @@ export class Hand {
     scene,
     numCards = 5,
     holdingPosition = new THREE.Vector3(0, -6, 5),
-    lyingPosition = new THREE.Vector3(0, -10, 3),
+    lyingPosition = new THREE.Vector3(0, -7, 5),
   }: HandConstructorParams) {
     this.scene = scene;
     this.numCards = numCards;
