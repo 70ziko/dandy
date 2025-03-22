@@ -117,7 +117,7 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
       renderer.setClearColor(0x1a1a1a);
       mountElement.appendChild(renderer.domElement);
 
-      const tableGeometry = new THREE.PlaneGeometry(20, 20);
+      const tableGeometry = new THREE.PlaneGeometry(24, 24);
       const tableMaterial = new THREE.MeshStandardMaterial({
         color: 0x004400,
         side: THREE.DoubleSide,
@@ -321,7 +321,7 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
     handRef.current = new Hand({
       scene: sceneRef.current.scene,
       numCards,
-      holdingPosition: new THREE.Vector3(0, -6, 5),
+      holdingPosition: new THREE.Vector3(0, -4, 7),
     });
 
     const cleanupRaycaster = setupRaycaster();

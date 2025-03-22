@@ -113,7 +113,7 @@ export class Hand {
             angle + Math.PI / 2
           )
         : new THREE.Euler(
-            Math.PI,
+            Math.PI / 2,
             0,
             angle + Math.PI / 2
           )
@@ -186,7 +186,7 @@ export class Hand {
 
       const controlPoint = new THREE.Vector3(
         card.getMesh().position.x,
-        card.getMesh().position.y + 0.5, // Adjust for arc height
+        card.getMesh().position.y + 0.5, // arc height
         card.getMesh().position.z
       );
 
