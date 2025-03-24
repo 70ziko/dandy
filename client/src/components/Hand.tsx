@@ -187,8 +187,8 @@ export class Hand {
 
       const controlPoint = new THREE.Vector3(
         card.getMesh().position.x,
-        card.getMesh().position.y - 1, // concave height
-        card.getMesh().position.z - 1
+        card.getMesh().position.y - 1.5, // concave height
+        card.getMesh().position.z - 1.5
       );
 
       const path = [
@@ -198,30 +198,39 @@ export class Hand {
       ];
       const tl = gsap.timeline();
       
-      tl.to(card.getMesh().position, {
-        motionPath: {
-          path: path,
-          type: "quadratic",
-          autoRotate: false
+      tl.to(
+        card.getMesh().position,
+        {
+          motionPath: {
+            path: path,
+            type: "quadratic",
+            autoRotate: false,
+          },
+          duration: 1,
+          ease: CustomEase.create(
+            "custom",
+            "M0,0 C0.085,0.61 0.219,0.858 0.3,0.9 0.441,0.973 0.748,1 1,1 "
+          ),
+          y: -500,
         },
-        duration: 1,
-        ease: CustomEase.create(
-          "custom", "M0,0 C0.084,0.61 0.151,0.858 0.205,0.925 0.265,1 0.374,1 1,1 "
-        )
-      }, 0)
-      .to(card.getMesh().rotation, {
-        x: targetRotation.x,
-        y: targetRotation.y,
-        z: targetRotation.z,
-        duration: 0.3,
-        ease: "power4.easeIn",
-        onComplete: () => {
-          card.setBasePosition(landingPosition);
-          card.getMesh().position.copy(landingPosition);
-          card.setBaseRotation(targetRotation);
-          card.getMesh().rotation.copy(targetRotation);
-        }
-      }, 0);
+        0
+      ).to(
+        card.getMesh().rotation,
+        {
+          x: targetRotation.x,
+          y: targetRotation.y,
+          z: targetRotation.z,
+          duration: 0.3,
+          ease: "power4.easeIn",
+          onComplete: () => {
+            card.setBasePosition(landingPosition);
+            card.getMesh().position.copy(landingPosition);
+            card.setBaseRotation(targetRotation);
+            card.getMesh().rotation.copy(targetRotation);
+          },
+        },
+        0
+      );
       card.stopFloatingAnimation();
     });
     
