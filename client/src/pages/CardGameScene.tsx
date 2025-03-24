@@ -21,7 +21,6 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
   const { tableId } = useParams<GameParams>();
   const { guestId } = useGuest();
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
   const mountRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<SceneRefs | null>(null);
@@ -44,20 +43,20 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
   // TODO: properly initialize game state
     console.log('tableId:', tableId);
     console.log('guestId:', guestId);
-    if (!tableId || !guestId) return;
+    if (!tableId || !guestId) {
+      setError('Table ID and Guest ID are required to join the game');
+      return;
+    }
 
     const initializeGame = async () => {
       try {
-        setIsLoading(true);
         await api.joinGame(tableId);
         
-        await api.drawCards(tableId);
+        // await api.drawCards(tableId);
         // TODO: Update hand with cards
         
-        setIsLoading(false);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to initialize game');
-        setIsLoading(false);
       }
     };
 
@@ -135,7 +134,7 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
       directionalLight.position.set(0, 5, 5);
       scene.add(directionalLight);
 
-      camera.position.set(0, 3, 15);
+      camera.position.set(0, 2.46, 15.5);
       camera.lookAt(0, -3, 0);
       sceneRef.current = { scene, camera, renderer };
     };
@@ -383,13 +382,9 @@ const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
     };
   }, [onkeydown]);
 
-  // if (error) {
-  //   return <div className="text-red-600">{error}</div>;
-  // }
-
-  // if (isLoading) {
-  //   return <div>Loading game...</div>;
-  // }
+  if (error) {
+    return <div>{error}</div>;
+  }
 
   return <div ref={mountRef} className="w-full h-screen" />;
 };

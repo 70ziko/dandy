@@ -1,6 +1,6 @@
 import type { Card } from '../types';
 
-const BASE_URL = process.env.API_URL || 'http://localhost:3001';
+const BASE_URL = process.env.API_URL || 'http://server:3001';
 
 class ApiService {
   private guestId: string | null = null;
@@ -47,17 +47,22 @@ class ApiService {
     return response.json();
   }
 
-  async drawCards(tableId: string): Promise<Card[]> {
-    const response = await fetch(`${BASE_URL}/${tableId}/draw`, {
-      method: 'GET',
-      headers: this.getHeaders(),
-      credentials: 'include',
+  async drawCards(_tableId: string): Promise<string> {
+    // const response = await fetch(`${BASE_URL}/${tableId}/draw`, {
+    //   method: 'GET',
+    //   headers: this.getHeaders(),
+    //   credentials: 'include',
+    // });
+
+    // console.log('drawCards response:', response);
+    // return this.handleResponse<Card[]>(response);
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve("drawCards");
+      }, 1000);
     });
-
-    console.log('drawCards response:', response);
-    return this.handleResponse<Card[]>(response);
   }
-
+  
   async performAction(tableId: string, action: string, value: any): Promise<any> {
     const response = await fetch(`${BASE_URL}/${tableId}/action`, {
       method: 'POST',
@@ -72,6 +77,12 @@ class ApiService {
   async joinGame(tableId: string): Promise<void> {
     // TODO: Implement WebSocket functionality
     console.log('Joining game:', tableId);
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve();
+      }, 1000);
+    }
+  );
   }
 
   async leaveGame(tableId: string): Promise<void> {
