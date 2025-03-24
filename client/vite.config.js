@@ -21,6 +21,6 @@ export default defineConfig({
   },
   define: {
     // Define any environment variables
-    'process.env.REACT_APP_API_URL': JSON.stringify(process.env.REACT_APP_API_URL || 'http://localhost:3001'),
+    'process.env.API_URL': JSON.stringify(process.env.API_URL || 'http://localhost:3001'),
   },
 });
