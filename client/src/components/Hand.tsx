@@ -5,6 +5,7 @@ import { MotionPathPlugin } from "gsap/MotionPathPlugin";
 import { CustomEase } from "gsap/all";
 
 gsap.registerPlugin(MotionPathPlugin);
+gsap.registerPlugin(CustomEase);
 
 interface HandConstructorParams {
   scene: THREE.Scene;
