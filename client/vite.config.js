@@ -11,16 +11,15 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3000,
-    host: '0.0.0.0', // to make it accessible from outside the container
+    host: '0.0.0.0', // accessible from outside the container
   },
   resolve: {
     alias: {
-      // Add any path aliases if needed
+      // path aliases
       '@': path.resolve(__dirname, 'src'),
     },
   },
   define: {
-    // Define any environment variables
     'process.env.API_URL': JSON.stringify(process.env.API_URL || 'http://localhost:3001'),
   },
 });
