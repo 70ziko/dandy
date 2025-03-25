@@ -2,7 +2,7 @@ import { Server } from 'socket.io';
 import { Server as HttpServer } from 'http';
 
 interface GameSocket {
-  gameId: string;
+  tableId: string;
   playerId: string;
 }
 
@@ -30,27 +30,27 @@ export class WebSocketService {
 
       // TODO: Implement full WebSocket functionality
       // Placeholder event handlers
-      socket.on('joinGame', (data: { gameId: string, playerId: string }) => {
+      socket.on('joinGame', (data: { tableId: string, playerId: string }) => {
         this.activeSockets.set(socket.id, {
-          gameId: data.gameId,
+          tableId: data.tableId,
           playerId: data.playerId
         });
-        socket.join(data.gameId);
+        socket.join(data.tableId);
         
         // Notify other players
-        socket.to(data.gameId).emit('playerJoined', {
+        socket.to(data.tableId).emit('playerJoined', {
           playerId: data.playerId
         });
       });
 
-      socket.on('leaveGame', (gameId: string) => {
+      socket.on('leaveGame', (tableId: string) => {
         const socketData = this.activeSockets.get(socket.id);
         if (socketData) {
-          socket.leave(gameId);
+          socket.leave(tableId);
           this.activeSockets.delete(socket.id);
           
           // Notify other players
-          socket.to(gameId).emit('playerLeft', {
+          socket.to(tableId).emit('playerLeft', {
             playerId: socketData.playerId
           });
         }
@@ -59,7 +59,7 @@ export class WebSocketService {
       socket.on('disconnect', () => {
         const socketData = this.activeSockets.get(socket.id);
         if (socketData) {
-          socket.to(socketData.gameId).emit('playerLeft', {
+          socket.to(socketData.tableId).emit('playerLeft', {
             playerId: socketData.playerId
           });
           this.activeSockets.delete(socket.id);
@@ -70,9 +70,9 @@ export class WebSocketService {
   }
 
   // Utility methods for future implementation
-  emitToGame(gameId: string, event: string, data: any) {
+  emitToGame(tableId: string, event: string, data: any) {
     if (!this.io) return;
-    this.io.to(gameId).emit(event, data);
+    this.io.to(tableId).emit(event, data);
   }
 
   emitToPlayer(playerId: string, event: string, data: any) {

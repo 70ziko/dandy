@@ -25,6 +25,7 @@ services:
       - MONGODB_URI=mongodb://mongodb:27017/dandy
       - REDIS_URL=redis://redis:6379
       - NODE_ENV=production
+      - CLIENT_URL=http://client:3000
     depends_on:
       - mongodb
       - redis

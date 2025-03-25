@@ -5,7 +5,7 @@ const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/dandy';
 const client = new MongoClient(uri);
 
 interface ArchivedGame {
-  gameId: string;
+  tableId: string;
   players: string[];
   startTime: Date;
   endTime: Date;
@@ -35,7 +35,7 @@ class MongoService {
       this.archiveCollection = db.collection<ArchivedGame>('archived_games');
       
       // Create indexes
-      await this.archiveCollection.createIndex({ gameId: 1 }, { unique: true });
+      await this.archiveCollection.createIndex({ tableId: 1 }, { unique: true });
       await this.archiveCollection.createIndex({ players: 1 });
       await this.archiveCollection.createIndex({ startTime: 1 });
     } catch (error) {
@@ -43,23 +43,23 @@ class MongoService {
     }
   }
 
-  async archiveGame(gameData: Omit<ArchivedGame, 'gameId'>): Promise<string> {
+  async archiveGame(gameData: Omit<ArchivedGame, 'tableId'>): Promise<string> {
     if (!this.archiveCollection) throw new Error('MongoDB not connected');
 
-    const gameId = uuidv4();
+    const tableId = uuidv4();
     const archivedGame: ArchivedGame = {
-      gameId,
+      tableId,
       ...gameData
     };
 
     await this.archiveCollection.insertOne(archivedGame);
-    return gameId;
+    return tableId;
   }
 
-  async getArchivedGame(gameId: string): Promise<ArchivedGame | null> {
+  async getArchivedGame(tableId: string): Promise<ArchivedGame | null> {
     if (!this.archiveCollection) throw new Error('MongoDB not connected');
 
-    return await this.archiveCollection.findOne({ gameId });
+    return await this.archiveCollection.findOne({ tableId });
   }
 
   async getPlayerGames(playerId: string): Promise<ArchivedGame[]> {
@@ -81,11 +81,11 @@ class MongoService {
       .toArray();
   }
 
-  async addGameAction(gameId: string, action: { playerId: string; action: string; timestamp: Date }) {
+  async addGameAction(tableId: string, action: { playerId: string; action: string; timestamp: Date }) {
     if (!this.archiveCollection) throw new Error('MongoDB not connected');
 
     await this.archiveCollection.updateOne(
-      { gameId },
+      { tableId },
       { $push: { actions: action } }
     );
   }

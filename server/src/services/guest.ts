@@ -56,10 +56,10 @@ export class GuestService {
     return true;
   }
 
-  async updateGuestGame(guestId: string, gameId: string | undefined): Promise<void> {
+  async updateGuestGame(guestId: string, tableId: string | undefined): Promise<void> {
     const session = await this.getGuestSession(guestId);
     if (session) {
-      session.currentGame = gameId;
+      session.currentGame = tableId;
       session.lastActive = Date.now();
       await redis.setGuestSession(guestId, session, this.SESSION_TTL);
     }

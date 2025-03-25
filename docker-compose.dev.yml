@@ -27,6 +27,7 @@ services:
     environment:
       - MONGODB_URI=mongodb://mongodb:27017/dandy
       - REDIS_URL=redis://redis:6379
+      - CLIENT_URL=http://client:3000
     volumes:
       - ./server:/usr/src/app
       - /usr/src/app/node_modules

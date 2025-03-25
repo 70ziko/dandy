@@ -30,7 +30,10 @@ app.use((req: Request, res: Response, next) => {
 });
 
 function setCorsHeaders(res: Response): void {
-  res.header("Access-Control-Allow-Origin", process.env.CLIENT_URL || "http://localhost:3000");
+  res.header(
+    "Access-Control-Allow-Origin",
+    process.env.CLIENT_URL || "http://localhost:3000"
+  );
   res.header(
     "Access-Control-Allow-Headers",
     "Origin, X-Guest-Id, X-Requested-With, Content-Type, Accept"
@@ -48,15 +51,19 @@ app.use(guestRouter);
 app.use("/:tableId/*", validateRequest);
 
 app.get<DrawParams>("/:tableId/draw", drawHandler);
-app.post<ActionParams, any, ActionBody>("/:tableId/action", express.json(), actionHandler);
+app.post<ActionParams, any, ActionBody>(
+  "/:tableId/action",
+  express.json(),
+  actionHandler
+);
 
 app.use(notFoundPlugin).use(errorHandlerPlugin);
 
 server.listen(port, () => {
   prettyLog(`Server running at http://localhost:${port}`);
 
-  process.on('SIGTERM', async () => {
-    errorLog('SIGTERM received. Shutting down gracefully...');
+  process.on("SIGTERM", async () => {
+    errorLog("SIGTERM received. Shutting down gracefully...");
     await mongodb.close();
     process.exit(0);
   });
