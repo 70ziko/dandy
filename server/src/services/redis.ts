@@ -1,4 +1,5 @@
 import { createClient } from 'redis';
+import type { Card, GameState, PlayerState } from '../types';
 
 const redisClient = createClient({
   url: process.env.REDIS_URL || 'redis://localhost:6379',
@@ -9,7 +10,7 @@ redisClient.on('connect', () => console.log('Connected to Redis'));
 
 redisClient.connect().catch(console.error);
 
-export const gameStateKey = (tableId: string) => `game:${tableId}`;
+export const gameStateKey = (tableId: string) => `table:${tableId}`;
 export const playerKey = (guestId: string) => `player:${guestId}`;
 
 export const redis = {
@@ -30,40 +31,44 @@ export const redis = {
     await redisClient.expire(`guest:${guestId}`, ttl);
   },
 
-  async setGameState(tableId: string, state: any): Promise<void> {
+  async setGameState(tableId: string, state: GameState): Promise<void> {
     await redisClient.set(gameStateKey(tableId), JSON.stringify(state));
   },
 
-  async getGameState(tableId: string): Promise<any> {
+  async getGameState(tableId: string): Promise<GameState | null> {
     const state = await redisClient.get(gameStateKey(tableId));
     return state ? JSON.parse(state) : null;
   },
 
-  async setPlayerState(guestId: string, state: any): Promise<void> {
+  async setPlayerState(guestId: string, state: PlayerState): Promise<void> {
     await redisClient.set(playerKey(guestId), JSON.stringify(state));
   },
 
-  async getPlayerState(guestId: string): Promise<any> {
+  async getPlayerState(guestId: string): Promise<PlayerState | null> {
     const state = await redisClient.get(playerKey(guestId));
     return state ? JSON.parse(state) : null;
   },
 
   async addPlayerToGame(tableId: string, guestId: string): Promise<void> {
-    const gameKey = gameStateKey(tableId);
     const game = await redis.getGameState(tableId);
     
     if (game) {
-      game.players = [...(game.players || []), guestId];
+      if (!game.players) {
+        game.players = [guestId];
+      }
+      game.players.push(guestId);
       await redis.setGameState(tableId, game);
     }
   },
 
   async removePlayerFromGame(tableId: string, guestId: string): Promise<void> {
-    const gameKey = gameStateKey(tableId);
     const game = await redis.getGameState(tableId);
     
-    if (game) {
-      game.players = (game.players || []).filter((id: string) => id !== guestId);
+    if (game && game.players) {
+      const index = game.players.indexOf(guestId);
+      if (index !== -1) {
+        game.players.splice(index, 1);
+      }
       await redis.setGameState(tableId, game);
     }
   },

@@ -13,6 +13,15 @@ function drawRandomCards(count: number, deck: Card[]): Card[] {
   return cards;
 }
 
+function shuffleDeck(deck: Card[]): Card[] {
+  const shuffledDeck = [...deck];
+  for (let i = shuffledDeck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffledDeck[i], shuffledDeck[j]] = [shuffledDeck[j], shuffledDeck[i]]
+  }
+  return shuffledDeck;
+}
+
 function initializeDeck(): Card[] {
   const suits: Card["suit"][] = ["hearts", "diamonds", "clubs", "spades"];
   const values: Card["value"][] = ["A", "9", "10", "J", "Q", "K"];
@@ -23,13 +32,8 @@ function initializeDeck(): Card[] {
       deck.push({ suit, value });
     }
   }
-
-  for (let i = deck.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [deck[i], deck[j]] = [deck[j], deck[i]];
-  }
-
-  return deck;
+  return shuffleDeck(deck);
 }
+
 
 export { drawRandomCards, initializeDeck };

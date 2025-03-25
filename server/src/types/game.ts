@@ -4,7 +4,7 @@ interface Card {
 }
 
 interface GameState {
-  players: Map<string, Card[]>; // guestId -> cards
+  players: string[]; // guestIds
   deck: Card[];
   turnCounter: number;
   currentTurn: string | null;
@@ -14,6 +14,11 @@ interface GameState {
     action: string;
     value?: any;
   };
+}
+
+interface PlayerState {
+  cards: Card[];
+  tableId: string;
 }
 
 interface GameStates {
@@ -37,6 +42,7 @@ export type {
   Card,
   GameState,
   GameStates,
+  PlayerState,
   DrawParams,
   ActionParams,
   ActionBody,

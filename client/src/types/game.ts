@@ -1,29 +1,8 @@
-import * as THREE from 'three';
-
-interface SceneRefs {
-  scene: THREE.Scene;
-  camera: THREE.PerspectiveCamera;
-  renderer: THREE.WebGLRenderer;
-}
-
-interface Props {
-  numCards?: number;
-}
-
-interface Card {
-  hitbox: THREE.Object3D;
-  mesh: THREE.Mesh;
-  isHovered: boolean;
-  hover: () => void;
-  unhover: () => void;
-  resetPosition: () => void;
-  startDrag: (position: THREE.Vector3) => void;
-  drag: (position: THREE.Vector3) => void;
-  endDrag: () => void;
+interface CardValue {
+  suit: "hearts" | "diamonds" | "clubs" | "spades";
+  value: "A" | "9" | "10" | "J" | "Q" | "K";
 }
 
 export type {
-  SceneRefs,
-  Props,
-  Card,
-};
+  CardValue,
+}

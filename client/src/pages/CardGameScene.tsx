@@ -7,14 +7,14 @@ import { Hand } from "../components/Hand";
 import { Deck } from "../components/Deck";
 import { useGuest } from "../contexts/GuestContext";
 import { api } from "../services/api";
-import type { SceneRefs, Props, Card } from "../types";
+import type { SceneRefs, CardGameSceneProps, Card } from "../types";
 import { CameraController } from "../utils/CameraController";
 
 gsap.registerPlugin(MotionPathPlugin);
 
 type GameParams = Record<'tableId', string | undefined>;
 
-const CardGame: React.FC<Props> = ({ numCards = 5 }) => {
+const CardGame: React.FC<CardGameSceneProps> = ({ numCards = 5 }) => {
   // Debug camera controls
   const [_cameraControlsEnabled, setCameraControlsEnabled] = useState(false);
   const cameraControllerRef = useRef<CameraController | null>(null);

@@ -1,11 +1,5 @@
 import * as THREE from "three";
-
-interface DeckConstructorParams {
-  scene: THREE.Scene;
-  position?: THREE.Vector3;
-  rotation?: THREE.Euler;
-  cardsInDeck?: number;
-}
+import type { DeckConstructorParams } from "../types";
 
 export class Deck {
   private scene: THREE.Scene;

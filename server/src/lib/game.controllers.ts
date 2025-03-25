@@ -16,7 +16,7 @@ export const drawHandler: RequestHandler<DrawParams> = async (req, res) => {
     
     if (!gameState) {
       gameState = {
-        players: [],
+        players: [guestId],
         deck: initializeDeck(),
         currentTurn: null,
         turnCounter: 0,
@@ -25,12 +25,12 @@ export const drawHandler: RequestHandler<DrawParams> = async (req, res) => {
     }
 
     const playerState = await redis.getPlayerState(guestId);
-    if (playerState?.cards) {
-      res.json(signData(playerState.cards));
+    if (playerState) {
+      res.json(signData(playerState));
       return;
     }
 
-    const cards = drawRandomCards(5, gameState.deck);
+    const cards = drawRandomCards(1, gameState.deck);
     
     gameState.players.push(guestId);
     if (!gameState.currentTurn) {
