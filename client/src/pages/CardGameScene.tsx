@@ -14,7 +14,7 @@ gsap.registerPlugin(MotionPathPlugin);
 
 type GameParams = Record<'tableId', string | undefined>;
 
-const CardGame: React.FC<CardGameSceneProps> = ({ numCards = 5 }) => {
+const CardGame: React.FC<CardGameSceneProps> = () => {
   const [_cameraControlsEnabled, setCameraControlsEnabled] = useState(false);
   const cameraControllerRef = useRef<CameraController | null>(null);
   const { tableId } = useParams<GameParams>();
@@ -52,8 +52,8 @@ const CardGame: React.FC<CardGameSceneProps> = ({ numCards = 5 }) => {
         await api.joinGame(tableId);
         
         const cards = await api.drawCards(tableId);
-        console.log('Cards drawn:', cards);
-        
+        setCardValues(cards);
+
         
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to initialize game');
@@ -318,11 +318,13 @@ const CardGame: React.FC<CardGameSceneProps> = ({ numCards = 5 }) => {
         sceneRef.current.renderer.domElement
       );
     }
+    console.log(cardValues);
     handRef.current = new Hand({
       scene: sceneRef.current.scene,
-      numCards,
+      cardValues,
       holdingPosition: new THREE.Vector3(0, -4, 10),
     });
+    console.log("handRef.current:", handRef.current);
 
     const cleanupRaycaster = setupRaycaster();
     window.addEventListener("resize", handleResize);
@@ -352,7 +354,7 @@ const CardGame: React.FC<CardGameSceneProps> = ({ numCards = 5 }) => {
       window.removeEventListener("resize", handleResize);
       cleanupRaycaster();
     };
-  }, [numCards]);
+  }, [cardValues]);
 
   const onkeydown = useCallback((event: KeyboardEvent) => {
     if (event.key.toUpperCase() === "C") {

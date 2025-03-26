@@ -1,4 +1,4 @@
-import { CardValue } from 'types/game';
+import { CardValue, DrawResponse } from 'types/game';
 
 const BASE_URL = typeof window !== 'undefined' 
   ? 'http://localhost:3001'  // Browser environment
@@ -35,6 +35,7 @@ class ApiService {
   }
 
   private async handleResponse<T>(response: Response): Promise<T> {
+    // can the player steal a guestId?
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
       throw new Error(error.message || 'Network response was not ok');
@@ -58,7 +59,9 @@ class ApiService {
     });
 
     console.log('drawCards response:', response);
-    return this.handleResponse<CardValue[]>(response);
+    const data = await this.handleResponse<DrawResponse>(response);
+    console.log('drawCards data:', data);
+    return data.data.cards;
   }
   
   async performAction(tableId: string, action: string, value: any): Promise<any> {

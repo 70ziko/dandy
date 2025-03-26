@@ -3,13 +3,14 @@ import { Card } from "./Card";
 import gsap from "gsap";
 import { MotionPathPlugin } from "gsap/MotionPathPlugin";
 import { CustomEase } from "gsap/all";
+import { CardValue } from "types";
 
 gsap.registerPlugin(MotionPathPlugin);
 gsap.registerPlugin(CustomEase);
 
 interface HandConstructorParams {
   scene: THREE.Scene;
-  numCards?: number;
+  cardValues: CardValue[];
   holdingPosition?: THREE.Vector3;
   lyingPosition?: THREE.Vector3;
   isHolding?: boolean;
@@ -23,7 +24,7 @@ interface FanProperties {
 
 export class Hand {
   private scene: THREE.Scene;
-  private numCards: number;
+  private cardValues: CardValue[];
   private holdingPosition: THREE.Vector3;
   private lyingPosition: THREE.Vector3;
   private cards: Card[];
@@ -31,12 +32,12 @@ export class Hand {
 
   constructor({
     scene,
-    numCards = 5,
+    cardValues = [],
     holdingPosition = new THREE.Vector3(0, -6, 5),
     lyingPosition = new THREE.Vector3(0, -7, 5),
   }: HandConstructorParams) {
     this.scene = scene;
-    this.numCards = numCards;
+    this.cardValues = cardValues;
     this.holdingPosition = holdingPosition;
     this.lyingPosition = lyingPosition;
     this.cards = [];
@@ -54,13 +55,12 @@ export class Hand {
   }
 
   private spawnCards(): void {
-    const { fanRadius, fanSpread, zOffset } = this.calculateFanProperties(
-      this.numCards
-    );
+    const numCards = this.cardValues.length;
+    const { fanRadius, fanSpread, zOffset } = this.calculateFanProperties(numCards);
     const centerAngle = Math.PI / 2;
 
-    for (let i = 0; i < this.numCards; i++) {
-      const angle = centerAngle + fanSpread * (i / (this.numCards - 1) - 0.5);
+    for (let i = 0; i < numCards; i++) {
+      const angle = centerAngle + fanSpread * (i / (numCards - 1 || 1) - 0.5);
       const xPos = Math.cos(angle) * fanRadius;
       const yPos = Math.sin(angle) * fanRadius + this.holdingPosition.y;
       const zPos = i * zOffset + this.holdingPosition.z;
@@ -68,7 +68,12 @@ export class Hand {
       const holdingPosition = new THREE.Vector3(xPos, yPos, zPos);
       const rotation = new THREE.Euler(-Math.PI * 0.2, 0, angle + Math.PI / 2);
 
-      const card = new Card({ scene: this.scene, position: holdingPosition, rotation });
+      const card = new Card({ 
+        scene: this.scene, 
+        position: holdingPosition, 
+        rotation,
+        value: "back"//this.cardValues[i]
+      });
       this.cards.push(card);
     }
   }
