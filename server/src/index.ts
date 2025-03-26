@@ -8,10 +8,16 @@ import { guestAuth, rateLimiter, validateRequest } from "./middleware/auth";
 
 import type { DrawParams, ActionParams, ActionBody } from "./types";
 import { router as guestRouter } from "./routers/guest.router";
-import { errorLog, prettyLog } from "./lib/loggers";
 import { drawHandler, actionHandler } from "./lib/game.controllers";
 import { errorHandlerPlugin } from "./lib/error-handler.plugin";
 import { notFoundPlugin } from "./lib/not-found.plugin";
+
+import prettyLog from "./lib/loggers";
+prettyLog.configure({
+  showTimestamp: true,
+  showLevel: true,
+  colors: true,
+});
 
 const app = express();
 const server = createServer(app);
@@ -30,10 +36,10 @@ app.use((req: Request, res: Response, next) => {
 });
 
 function setCorsHeaders(res: Response): void {
-  res.header(
-    "Access-Control-Allow-Origin",
-    process.env.CLIENT_URL || "http://localhost:3000"
-  );
+  res.header("Access-Control-Allow-Origin", [
+    process.env.CLIENT_URL || "http://client:3000",
+    "http://localhost:3000",
+  ]);
   res.header(
     "Access-Control-Allow-Headers",
     "Origin, X-Guest-Id, X-Requested-With, Content-Type, Accept"
@@ -60,10 +66,10 @@ app.post<ActionParams, any, ActionBody>(
 app.use(notFoundPlugin).use(errorHandlerPlugin);
 
 server.listen(port, () => {
-  prettyLog(`Server running at http://localhost:${port}`);
+  console.log(`Server running at http://localhost:${port}`);
 
   process.on("SIGTERM", async () => {
-    errorLog("SIGTERM received. Shutting down gracefully...");
+    console.error("SIGTERM received. Shutting down gracefully...");
     await mongodb.close();
     process.exit(0);
   });

@@ -5,7 +5,6 @@ import { websocket } from "../services/websocket";
 import { initializeDeck, drawRandomCards } from "./deck-handlers";
 import { signData } from "./crypto";
 import { redis } from "../services/redis";
-import { errorLog } from "./loggers";
 
 export const drawHandler: RequestHandler<DrawParams> = async (req, res) => {
   try {
@@ -42,7 +41,7 @@ export const drawHandler: RequestHandler<DrawParams> = async (req, res) => {
 
     res.json(signData(cards));
   } catch (error) {
-    errorLog('Error in draw endpoint:', error);
+    console.error('Error in draw endpoint:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };
@@ -74,7 +73,7 @@ export const actionHandler: RequestHandler<ActionParams, any, ActionBody> = asyn
 
     res.json({ status: "action received" });
   } catch (error) {
-    errorLog('Error in action endpoint:', error);
+    console.error('Error in action endpoint:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };
