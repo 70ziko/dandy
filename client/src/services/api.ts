@@ -1,6 +1,8 @@
 import { CardValue } from 'types/game';
 
-const BASE_URL = process.env.API_URL || 'http://server:3001';
+const BASE_URL = typeof window !== 'undefined' 
+  ? 'http://localhost:3001'  // Browser environment
+  : process.env.API_URL || 'http://server:3001'; // Docker environment
 
 class ApiService {
   private guestId: string | null = null;

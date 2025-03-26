@@ -36,10 +36,16 @@ app.use((req: Request, res: Response, next) => {
 });
 
 function setCorsHeaders(res: Response): void {
-  res.header("Access-Control-Allow-Origin", [
+  const allowedOrigins = [
     process.env.CLIENT_URL || "http://client:3000",
     "http://localhost:3000",
-  ]);
+  ];
+  
+  const origin = res.req.headers.origin;
+  if (origin && allowedOrigins.includes(origin)) {
+    res.header("Access-Control-Allow-Origin", origin);
+  }
+
   res.header(
     "Access-Control-Allow-Headers",
     "Origin, X-Guest-Id, X-Requested-With, Content-Type, Accept"
