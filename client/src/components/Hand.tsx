@@ -210,7 +210,7 @@ export class Hand {
           duration: 1,
           ease: CustomEase.create(
             "custom",
-            "M0,0 C0.085,0.61 0.219,0.858 0.3,0.9 0.441,0.973 0.748,1 1,1 "
+            "M0,0 C0.084,0.61 0.152,0.823 0.179,0.905 0.209,0.998 0.374,1 1,1 "
           ),
           y: -500,
         },
@@ -221,8 +221,11 @@ export class Hand {
           x: targetRotation.x,
           y: targetRotation.y,
           z: targetRotation.z,
-          duration: 0.3,
-          ease: "power4.easeIn",
+          duration: 0.5,
+          ease: CustomEase.create(
+            "custom",
+            "M0,0 C0.084,0.61 0.152,0.823 0.179,0.905 0.209,0.998 0.374,1 1,1 "
+          ),
           onComplete: () => {
             card.setBasePosition(landingPosition);
             card.getMesh().position.copy(landingPosition);

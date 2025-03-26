@@ -2,6 +2,7 @@ version: '3.8'
 
 services:
   client:
+    hostname: client
     build: 
       context: ./client
       dockerfile: Dockerfile
@@ -16,8 +17,11 @@ services:
     command: bun run dev
     depends_on:
       - server
+    networks:
+      - dandy-network
 
   server:
+    hostname: server
     build:
       context: ./server
       dockerfile: Dockerfile
@@ -35,6 +39,8 @@ services:
     depends_on:
       - mongodb
       - redis
+    networks:
+      - dandy-network
 
   mongodb:
     image: mongo:latest
@@ -42,6 +48,8 @@ services:
       - "27017:27017"
     volumes:
       - mongodb_data:/data/db
+    networks:
+      - dandy-network
 
   redis:
     image: redis:alpine
@@ -49,6 +57,12 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    networks:
+      - dandy-network
+
+networks:
+  dandy-network:
+    driver: bridge
 
 volumes:
   mongodb_data:

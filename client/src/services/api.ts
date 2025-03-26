@@ -1,4 +1,4 @@
-import type { Card } from '../types';
+import { CardValue } from 'types/game';
 
 const BASE_URL = process.env.API_URL || 'http://server:3001';
 
@@ -47,20 +47,16 @@ class ApiService {
     return response.json();
   }
 
-  async drawCards(_tableId: string): Promise<string> {
-    // const response = await fetch(`${BASE_URL}/${tableId}/draw`, {
-    //   method: 'GET',
-    //   headers: this.getHeaders(),
-    //   credentials: 'include',
-    // });
-
-    // console.log('drawCards response:', response);
-    // return this.handleResponse<Card[]>(response);
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve("drawCards");
-      }, 1000);
+  async drawCards(tableId: string): Promise<CardValue[]> {
+    console.log('Drawing cards for table:', tableId);
+    const response = await fetch(`${BASE_URL}/${tableId}/draw`, {
+      method: 'GET',
+      headers: this.getHeaders(),
+      credentials: 'include',
     });
+
+    console.log('drawCards response:', response);
+    return this.handleResponse<CardValue[]>(response);
   }
   
   async performAction(tableId: string, action: string, value: any): Promise<any> {

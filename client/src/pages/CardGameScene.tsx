@@ -15,7 +15,6 @@ gsap.registerPlugin(MotionPathPlugin);
 type GameParams = Record<'tableId', string | undefined>;
 
 const CardGame: React.FC<CardGameSceneProps> = ({ numCards = 5 }) => {
-  // Debug camera controls
   const [_cameraControlsEnabled, setCameraControlsEnabled] = useState(false);
   const cameraControllerRef = useRef<CameraController | null>(null);
   const { tableId } = useParams<GameParams>();
@@ -40,7 +39,6 @@ const CardGame: React.FC<CardGameSceneProps> = ({ numCards = 5 }) => {
   }, []);
 
   useEffect(() => {
-  // TODO: properly initialize game state
     console.log('tableId:', tableId);
     console.log('guestId:', guestId);
     if (!tableId || !guestId) {
@@ -52,8 +50,9 @@ const CardGame: React.FC<CardGameSceneProps> = ({ numCards = 5 }) => {
       try {
         await api.joinGame(tableId);
         
-        // await api.drawCards(tableId);
-        // TODO: Update hand with cards
+        const cards = await api.drawCards(tableId);
+        console.log('Cards drawn:', cards);
+        
         
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to initialize game');
