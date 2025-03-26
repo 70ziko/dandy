@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { CardValue } from './game';
 
 interface SceneRefs {
   scene: THREE.Scene;
@@ -20,6 +21,7 @@ interface DeckConstructorParams {
 
 
 interface Card {
+  value: CardValue;
   hitbox: THREE.Object3D;
   mesh: THREE.Mesh;
   isHovered: boolean;

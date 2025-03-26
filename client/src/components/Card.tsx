@@ -1,16 +1,18 @@
 import * as THREE from "three";
 import gsap from "gsap";
 import { FluidBackgroundHandle } from "../fluidBackground";
+import { CardValue } from "types";
 
 interface CardConstructorParams {
   scene: THREE.Scene;
   position?: THREE.Vector3;
   rotation?: THREE.Euler;
   fluidRef?: React.RefObject<FluidBackgroundHandle>;
+  value?: CardValue | "back"; 
 }
 
 export class Card {
-  // TODO: Add a value and fetch texture for the card
+  protected value: CardValue | "back";
   protected scene: THREE.Scene;
   protected mesh: THREE.Mesh;
   protected hitbox: THREE.Mesh;
@@ -35,8 +37,10 @@ export class Card {
     position = new THREE.Vector3(),
     rotation = new THREE.Euler(),
     fluidRef,
+    value = "back", 
   }: CardConstructorParams) {
     this.scene = scene;
+    this.value = value;
     this.mesh = this.createMesh();
     this.hitbox = this.createHitbox();
 
@@ -62,9 +66,19 @@ export class Card {
     this.fluidRef = fluidRef;
     this.edgePoints = this.calculateEdgePoints();
 
-    // Initialize last position and time for velocity calculation
     this.lastPosition = position.clone();
     this.lastTime = performance.now();
+  }
+
+  protected getCardTexturePath(value: CardValue | "back"): string {
+    if (value === "back") {
+      return "/assets/black-reverse.jpg";
+    }
+    
+    // Format: /assets/cards/{value}{first letter of suit}.png
+    // e.g. for 10 of spades: /assets/cards/10S.png
+    const suitLetter = value.suit.charAt(0).toUpperCase();
+    return `/assets/cards/${value.value}${suitLetter}.png`;
   }
 
   protected createMesh(): THREE.Mesh {
@@ -170,7 +184,8 @@ export class Card {
     geometry.computeBoundingSphere();
 
     const textureLoader = new THREE.TextureLoader();
-    const frontTexture = textureLoader.load("/assets/black-reverse.jpg");
+    const frontTexturePath = this.getCardTexturePath(this.value);
+    const frontTexture = textureLoader.load(frontTexturePath);
     const backTexture = textureLoader.load("/assets/black-reverse.jpg");
 
     const frontMaterial = new THREE.MeshPhongMaterial({
@@ -522,12 +537,31 @@ export class Card {
   public setBaseRotation(rotation: THREE.Euler): void {
     this.baseRotation.copy(rotation);
   }
+
+  public getValue(): CardValue | "back" {
+    return this.value;
+  }
+  
+  public setValue(value: CardValue | "back"): void {
+    this.value = value;
+    
+    const textureLoader = new THREE.TextureLoader();
+    const frontTexturePath = this.getCardTexturePath(value);
+    const frontTexture = textureLoader.load(frontTexturePath);
+    
+    if (Array.isArray(this.mesh.material)) {
+      const frontMaterial = this.mesh.material[0] as THREE.MeshPhongMaterial;
+      frontMaterial.map = frontTexture;
+      frontMaterial.needsUpdate = true;
+    }
+  }
 }
 
 interface GuiCardConstructorParams extends CardConstructorParams {
   frontTexture?: string;
   alt: string;
   onClick?: () => void;
+  value?: CardValue | "back";
 }
 
 export class GuiCard extends Card {
@@ -541,42 +575,55 @@ export class GuiCard extends Card {
     this.alt = params.alt;
     this.onClick = params.onClick;
 
-    const canvas = document.createElement("canvas");
-    const context = canvas.getContext("2d");
-    canvas.width = 420;
-    canvas.height = 420;
+    if (this.frontTextureUrl) {
+      const loader = new THREE.TextureLoader();
+      const texture = loader.load(this.frontTextureUrl);
+      texture.center.set(0, 0);
 
-    if (context) {
-      context.fillStyle = "#E6E6E6";
-      context.fillRect(0, 0, canvas.width, canvas.height);
-      context.font = "bold 48px Arial";
-      context.fillStyle = "#3D3D3D";
-      context.textAlign = "center";
-      context.textBaseline = "middle";
-      context.fillText(this.alt, canvas.width / 2, canvas.height / 2);
-    }
+      const frontMaterial = new THREE.MeshPhongMaterial({
+        map: texture,
+        side: THREE.FrontSide,
+        shininess: 0,
+        depthTest: false,
+        polygonOffset: true,
+        polygonOffsetFactor: 1,
+        polygonOffsetUnits: 1,
+      });
 
-    const defaultTexture = new THREE.CanvasTexture(canvas);
+      if (Array.isArray(this.mesh.material)) {
+        this.mesh.material[0] = frontMaterial;
+      }
+    } else if (this.value === "back") {
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d");
+      canvas.width = 420;
+      canvas.height = 420;
 
-    const loader = new THREE.TextureLoader();
-    const texture = this.frontTextureUrl
-      ? loader.load(this.frontTextureUrl)
-      : defaultTexture;
+      if (context) {
+        context.fillStyle = "#E6E6E6";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.font = "bold 48px Arial";
+        context.fillStyle = "#3D3D3D";
+        context.textAlign = "center";
+        context.textBaseline = "middle";
+        context.fillText(this.alt, canvas.width / 2, canvas.height / 2);
+      }
 
-    texture.center.set(0, 0);
+      const defaultTexture = new THREE.CanvasTexture(canvas);
+      
+      const frontMaterial = new THREE.MeshPhongMaterial({
+        map: defaultTexture,
+        side: THREE.FrontSide,
+        shininess: 0,
+        depthTest: false,
+        polygonOffset: true,
+        polygonOffsetFactor: 1,
+        polygonOffsetUnits: 1,
+      });
 
-    const frontMaterial = new THREE.MeshPhongMaterial({
-      map: texture,
-      side: THREE.FrontSide,
-      shininess: 0,
-      depthTest: false,
-      polygonOffset: true,
-      polygonOffsetFactor: 1,
-      polygonOffsetUnits: 1,
-    });
-
-    if (Array.isArray(this.mesh.material)) {
-      this.mesh.material[0] = frontMaterial;
+      if (Array.isArray(this.mesh.material)) {
+        this.mesh.material[0] = frontMaterial;
+      }
     }
 
     if (this.onClick) {

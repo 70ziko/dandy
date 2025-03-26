@@ -7,7 +7,7 @@ import { Hand } from "../components/Hand";
 import { Deck } from "../components/Deck";
 import { useGuest } from "../contexts/GuestContext";
 import { api } from "../services/api";
-import type { SceneRefs, CardGameSceneProps, Card } from "../types";
+import type { SceneRefs, CardGameSceneProps, Card, CardValue } from "../types";
 import { CameraController } from "../utils/CameraController";
 
 gsap.registerPlugin(MotionPathPlugin);
@@ -20,6 +20,7 @@ const CardGame: React.FC<CardGameSceneProps> = ({ numCards = 5 }) => {
   const { tableId } = useParams<GameParams>();
   const { guestId } = useGuest();
   const [error, setError] = useState<string | null>(null);
+  const [cardValues, setCardValues] = useState<CardValue[]>([]);
 
   const mountRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<SceneRefs | null>(null);
