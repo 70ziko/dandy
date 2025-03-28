@@ -72,7 +72,7 @@ export class Hand {
         scene: this.scene, 
         position: holdingPosition, 
         rotation,
-        value: "back"//this.cardValues[i]
+        value: this.cardValues[i]
       });
       this.cards.push(card);
     }
