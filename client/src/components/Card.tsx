@@ -14,7 +14,7 @@ interface CardConstructorParams {
 export class Card {
   protected value: CardValue | "back";
   protected scene: THREE.Scene;
-  protected mesh: THREE.Mesh;
+  protected mesh: THREE.Object3D;
   protected hitbox: THREE.Mesh;
   protected basePosition: THREE.Vector3;
   protected baseRotation: THREE.Euler;
@@ -81,111 +81,17 @@ export class Card {
     return `/assets/cards/${value.value}${suitLetter}.png`;
   }
 
-  protected createMesh(): THREE.Mesh {
+  protected createMesh(): THREE.Group {
     const width = 1;
     const height = 1.618;
-    const thickness = 0.0;
-    const radius = 0.05;
 
-    const shape = new THREE.Shape();
-    const x = -width / 2,
-      y = -height / 2;
-
-    shape.moveTo(x + radius, y);
-    shape.lineTo(x + width - radius, y);
-    shape.quadraticCurveTo(x + width, y, x + width, y + radius);
-    shape.lineTo(x + width, y + height - radius);
-    shape.quadraticCurveTo(
-      x + width,
-      y + height,
-      x + width - radius,
-      y + height
-    );
-    shape.lineTo(x + radius, y + height);
-    shape.quadraticCurveTo(x, y + height, x, y + height - radius);
-    shape.lineTo(x, y + radius);
-    shape.quadraticCurveTo(x, y, x + radius, y);
-
-    const extrudeSettings = {
-      depth: thickness,
-      bevelEnabled: true,
-      bevelThickness: 0.01,
-      bevelSize: 0.01,
-      bevelOffset: 0,
-      bevelSegments: 3,
-      UVGenerator: {
-        generateSideWallUV: function (
-          _geometry: THREE.ExtrudeGeometry,
-          _vertices: number[],
-          _indexA: number,
-          _indexB: number,
-          _indexC: number,
-          _indexD: number
-        ) {
-          return [
-            new THREE.Vector2(0, 0),
-            new THREE.Vector2(1, 0),
-            new THREE.Vector2(1, 1),
-            new THREE.Vector2(0, 1),
-          ];
-        },
-        generateTopUV: function (
-          _geometry: THREE.ExtrudeGeometry,
-          _vertices: number[],
-          _indexA: number,
-          _indexB: number,
-          _indexC: number
-        ) {
-          return [
-            new THREE.Vector2(0, 1),
-            new THREE.Vector2(1, 1),
-            new THREE.Vector2(1, 0),
-          ];
-        },
-        generateBottomUV: function (
-          _geometry: THREE.ExtrudeGeometry,
-          _vertices: number[],
-          _indexA: number,
-          _indexB: number,
-          _indexC: number
-        ) {
-          return [
-            new THREE.Vector2(0, 1),
-            new THREE.Vector2(1, 1),
-            new THREE.Vector2(1, 0),
-          ];
-        },
-      },
-    };
-
-    const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-
-    if (!geometry.attributes.position || !geometry.attributes.uv) {
-      throw new Error("Invalid geometry: missing position or UV attributes");
-    }
-
-    const uvAttribute = geometry.attributes.uv;
-    const positions = geometry.attributes.position;
-
-    // Update UV coordinates with validation
-    for (let i = 0; i < uvAttribute.count; i++) {
-      const x = positions.getX(i);
-      const y = positions.getY(i);
-
-      if (isNaN(x) || isNaN(y)) {
-        console.warn(`Invalid position at index ${i}: x=${x}, y=${y}`);
-        continue;
-      }
-
-      uvAttribute.setXY(i, (x + width / 2) / width, (y + height / 2) / height);
-    }
-
-    geometry.computeBoundingBox();
-    geometry.computeBoundingSphere();
-
+    // Create two separate geometries for front and back
+    const geometry = new THREE.PlaneGeometry(width, height);
+    
     const textureLoader = new THREE.TextureLoader();
-    const frontTexturePath = this.getCardTexturePath(this.value);
-    const frontTexture = textureLoader.load(frontTexturePath);
+    const frontTexture = this.value === "back" 
+      ? textureLoader.load("/assets/black-reverse.jpg")
+      : textureLoader.load(this.getCardTexturePath(this.value));
     const backTexture = textureLoader.load("/assets/black-reverse.jpg");
 
     const frontMaterial = new THREE.MeshPhongMaterial({
@@ -193,26 +99,29 @@ export class Card {
       side: THREE.FrontSide,
       shininess: 0,
       depthTest: false,
-      polygonOffset: true,
-      polygonOffsetFactor: 1,
-      polygonOffsetUnits: 1,
     });
 
     const backMaterial = new THREE.MeshPhongMaterial({
       map: backTexture,
-      side: THREE.BackSide,
+      side: THREE.FrontSide,
       shininess: 0,
       depthTest: false,
-      polygonOffset: true,
-      polygonOffsetFactor: 1,
-      polygonOffsetUnits: 1,
     });
 
-    const materials = [frontMaterial, backMaterial];
-    const mesh = new THREE.Mesh(geometry, materials);
-    geometry.center();
+    // Create meshes
+    const frontMesh = new THREE.Mesh(geometry, frontMaterial);
+    const backMesh = new THREE.Mesh(geometry, backMaterial);
+    
+    // Rotate back mesh 180 degrees and offset it slightly
+    backMesh.rotation.y = Math.PI;
+    backMesh.position.z = -0.001;
+    
+    // Create a group to hold both meshes
+    const group = new THREE.Group();
+    group.add(frontMesh);
+    group.add(backMesh);
 
-    return mesh;
+    return group;
   }
 
   protected createHitbox(): THREE.Mesh {
@@ -231,7 +140,7 @@ export class Card {
     return this.hitbox;
   }
 
-  public getMesh(): THREE.Mesh {
+  public getMesh(): THREE.Object3D {
     return this.mesh;
   }
 
@@ -326,16 +235,6 @@ export class Card {
       ease: "back.out(1.7)",
       onUpdate: () => this.updateFluidBackground(),
     });
-    // .to(
-    //   this.mesh.rotation,
-    //   {
-    //     x: -Math.PI * 0.1,
-    //     duration: 0.3,
-    //     ease: "power2.out",
-    //     onUpdate: () => this.updateFluidBackground(),
-    //   },
-    //   "-=0.2"
-    // );
 
     this.currentTween = tl;
   }
@@ -418,15 +317,25 @@ export class Card {
   }
 
   public remove(): void {
+    // Remove from scene
     this.scene.remove(this.mesh);
     this.scene.remove(this.hitbox);
-    this.mesh.geometry.dispose();
+    
+    // Dispose geometries and materials
     this.hitbox.geometry.dispose();
-    if (Array.isArray(this.mesh.material)) {
-      this.mesh.material.forEach((material) => material.dispose());
-    } else {
-      this.mesh.material.dispose();
+    if (this.hitbox.material instanceof THREE.Material) {
+      this.hitbox.material.dispose();
     }
+    
+    // Clean up front and back meshes
+    this.mesh.children.forEach(child => {
+      if (child instanceof THREE.Mesh) {
+        child.geometry.dispose();
+        if (child.material instanceof THREE.Material) {
+          child.material.dispose();
+        }
+      }
+    });
   }
 
   protected calculateEdgePoints(): THREE.Vector3[] {
@@ -504,26 +413,12 @@ export class Card {
         const totalVelocityX = scaledVelocity.x + rotationalVelocity.x;
         const totalVelocityY = scaledVelocity.y + rotationalVelocity.y;
 
-        // Original: addInput
         this.fluidRef.current.addInput(
           screenX,
           screenY,
           totalVelocityX,
           totalVelocityY
         );
-
-        // New: addCardInput including the card's texture
-        // const frontMat = Array.isArray(this.mesh.material)
-        //   ? this.mesh.material[0] as THREE.MeshPhongMaterial
-        //   : this.mesh.material as THREE.MeshPhongMaterial;
-        // const frontTexture = frontMat.map;
-        // if (frontTexture) {
-        //   this.fluidRef.current.addCardInput(screenX, screenY, totalVelocityX, totalVelocityY, frontTexture);
-        // } else {
-        // const textureLoader = new THREE.TextureLoader();
-        // const brushTexture = textureLoader.load("/assets/square_brush.png");
-        // this.fluidRef.current.addCardInput(screenX, screenY, totalVelocityX, totalVelocityY, brushTexture);
-        // }
       }
     }
     this.lastPosition.copy(currentPosition);
@@ -546,13 +441,14 @@ export class Card {
     this.value = value;
     
     const textureLoader = new THREE.TextureLoader();
-    const frontTexturePath = this.getCardTexturePath(value);
-    const frontTexture = textureLoader.load(frontTexturePath);
+    const frontTexture = value === "back" 
+      ? textureLoader.load("/assets/black-reverse.jpg")
+      : textureLoader.load(this.getCardTexturePath(value));
     
-    if (Array.isArray(this.mesh.material)) {
-      const frontMaterial = this.mesh.material[0] as THREE.MeshPhongMaterial;
-      frontMaterial.map = frontTexture;
-      frontMaterial.needsUpdate = true;
+    const frontMesh = (this.mesh as THREE.Group).children[0] as THREE.Mesh;
+    if (frontMesh && frontMesh.material instanceof THREE.MeshPhongMaterial) {
+      frontMesh.material.map = frontTexture;
+      frontMesh.material.needsUpdate = true;
     }
   }
 }
@@ -575,25 +471,7 @@ export class GuiCard extends Card {
     this.alt = params.alt;
     this.onClick = params.onClick;
 
-    if (this.frontTextureUrl) {
-      const loader = new THREE.TextureLoader();
-      const texture = loader.load(this.frontTextureUrl);
-      texture.center.set(0, 0);
-
-      const frontMaterial = new THREE.MeshPhongMaterial({
-        map: texture,
-        side: THREE.FrontSide,
-        shininess: 0,
-        depthTest: false,
-        polygonOffset: true,
-        polygonOffsetFactor: 1,
-        polygonOffsetUnits: 1,
-      });
-
-      if (Array.isArray(this.mesh.material)) {
-        this.mesh.material[0] = frontMaterial;
-      }
-    } else if (this.value === "back") {
+    if (this.value === "back") {
       const canvas = document.createElement("canvas");
       const context = canvas.getContext("2d");
       canvas.width = 420;
@@ -621,8 +499,56 @@ export class GuiCard extends Card {
         polygonOffsetUnits: 1,
       });
 
-      if (Array.isArray(this.mesh.material)) {
-        this.mesh.material[0] = frontMaterial;
+      const group = this.mesh as THREE.Group;
+      const [frontMesh, backMesh] = group.children as [THREE.Mesh, THREE.Mesh];
+
+      if (frontMesh && frontMesh.material instanceof THREE.MeshPhongMaterial) {
+        frontMesh.material = frontMaterial;
+        frontMesh.material.needsUpdate = true;
+      }
+
+      if (backMesh && backMesh.material instanceof THREE.MeshPhongMaterial) {
+        const textureLoader = new THREE.TextureLoader();
+        const backMaterial = new THREE.MeshPhongMaterial({
+          map: textureLoader.load("/assets/black-reverse.jpg"),
+          side: THREE.FrontSide,
+          shininess: 0,
+          depthTest: true,
+        });
+        backMesh.material = backMaterial;
+        backMesh.material.needsUpdate = true;
+      }
+    } else if (this.frontTextureUrl) {
+      const group = this.mesh as THREE.Group;
+      const [frontMesh, backMesh] = group.children as [THREE.Mesh, THREE.Mesh];
+      
+      const loader = new THREE.TextureLoader();
+      const texture = loader.load(this.frontTextureUrl);
+      texture.center.set(0, 0);
+
+      if (frontMesh && frontMesh.material instanceof THREE.MeshPhongMaterial) {
+        const frontMaterial = new THREE.MeshPhongMaterial({
+          map: texture,
+          side: THREE.FrontSide,
+          shininess: 0,
+          depthTest: false,
+          polygonOffset: true,
+          polygonOffsetFactor: 1,
+          polygonOffsetUnits: 1,
+        });
+        frontMesh.material = frontMaterial;
+        frontMesh.material.needsUpdate = true;
+      }
+
+      if (backMesh && backMesh.material instanceof THREE.MeshPhongMaterial) {
+        const backMaterial = new THREE.MeshPhongMaterial({
+          map: loader.load("/assets/black-reverse.jpg"),
+          side: THREE.FrontSide,
+          shininess: 0,
+          depthTest: true,
+        });
+        backMesh.material = backMaterial;
+        backMesh.material.needsUpdate = true;
       }
     }
 
