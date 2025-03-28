@@ -37,39 +37,39 @@ export class Card {
     position = new THREE.Vector3(),
     rotation = new THREE.Euler(),
     fluidRef,
-    value = "back", 
+    value = "back",
   }: CardConstructorParams) {
     this.scene = scene;
     this.value = value;
     this.mesh = this.createMesh();
     this.hitbox = this.createHitbox();
-
+    
     this.basePosition = position.clone();
     this.baseRotation = rotation.clone();
-
+    
     this.mesh.position.copy(position);
     this.mesh.rotation.copy(rotation);
     this.hitbox.position.copy(position);
     this.hitbox.rotation.copy(rotation);
-
+    
     this.scene.add(this.mesh);
     this.scene.add(this.hitbox);
-
+    
     this.isHovered = false;
     this.isDragging = false;
     this.currentTween = null;
     this.floatingAnimation = null;
     this.startFloatingAnimation();
-
+    
     this.originalPosition = position.clone();
     this.originalRotation = rotation.clone();
     this.fluidRef = fluidRef;
     this.edgePoints = this.calculateEdgePoints();
-
+    
     this.lastPosition = position.clone();
     this.lastTime = performance.now();
   }
-
+  
   protected getCardTexturePath(value: CardValue | "back"): string {
     if (value === "back") {
       return "/assets/black-reverse.jpg";
@@ -81,12 +81,40 @@ export class Card {
     return `/assets/cards/${value.value}${suitLetter}.png`;
   }
 
+  protected createRoundedRectangle(width: number, height: number, radius: number): THREE.Shape {
+    const shape = new THREE.Shape();
+    const x = -width / 2;
+    const y = -height / 2;
+
+    shape.moveTo(x + radius, y);
+    shape.lineTo(x + width - radius, y);
+    shape.quadraticCurveTo(x + width, y, x + width, y + radius);
+    shape.lineTo(x + width, y + height - radius);
+    shape.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    shape.lineTo(x + radius, y + height);
+    shape.quadraticCurveTo(x, y + height, x, y + height - radius);
+    shape.lineTo(x, y + radius);
+    shape.quadraticCurveTo(x, y, x + radius, y);
+
+    return shape;
+  }
+
   protected createMesh(): THREE.Group {
     const width = 1;
     const height = 1.618;
+    const radius = 0.05;
 
-    // Create two separate geometries for front and back
-    const geometry = new THREE.PlaneGeometry(width, height);
+    const shape = this.createRoundedRectangle(width, height, radius);
+    const roundedShape = new THREE.ShapeGeometry(shape);
+
+    const coords = roundedShape.getAttribute('position');
+    const uvs = roundedShape.getAttribute('uv');
+    for (let i = 0; i < coords.count; i++) {
+      const x = coords.getX(i);
+      const y = coords.getY(i);
+      uvs.setXY(i, (x + width/2) / width, (y + height/2) / height);
+    }
+    roundedShape.attributes.uv.needsUpdate = true;
     
     const textureLoader = new THREE.TextureLoader();
     const frontTexture = this.value === "back" 
@@ -108,15 +136,12 @@ export class Card {
       depthTest: false,
     });
 
-    // Create meshes
-    const frontMesh = new THREE.Mesh(geometry, frontMaterial);
-    const backMesh = new THREE.Mesh(geometry, backMaterial);
+    const frontMesh = new THREE.Mesh(roundedShape, frontMaterial);
+    const backMesh = new THREE.Mesh(roundedShape, backMaterial);
     
-    // Rotate back mesh 180 degrees and offset it slightly
     backMesh.rotation.y = Math.PI;
     backMesh.position.z = -0.001;
     
-    // Create a group to hold both meshes
     const group = new THREE.Group();
     group.add(frontMesh);
     group.add(backMesh);
@@ -126,13 +151,26 @@ export class Card {
 
   protected createHitbox(): THREE.Mesh {
     const width = 1;
-    const height = 2;
-    const geometry = new THREE.PlaneGeometry(width, height);
+    const height = 1.618;
+    const radius = 0.05;
+    const shape = this.createRoundedRectangle(width, height, radius);
+    const geometry = new THREE.ShapeGeometry(shape);
+
+    const coords = geometry.getAttribute('position');
+    const uvs = geometry.getAttribute('uv');
+    for (let i = 0; i < coords.count; i++) {
+      const x = coords.getX(i);
+      const y = coords.getY(i);
+      uvs.setXY(i, (x + width/2) / width, (y + height/2) / height);
+    }
+    geometry.attributes.uv.needsUpdate = true;
+
     const material = new THREE.MeshPhongMaterial({
       transparent: true,
       opacity: 0,
       side: THREE.DoubleSide,
     });
+
     return new THREE.Mesh(geometry, material);
   }
 
@@ -317,17 +355,14 @@ export class Card {
   }
 
   public remove(): void {
-    // Remove from scene
     this.scene.remove(this.mesh);
     this.scene.remove(this.hitbox);
     
-    // Dispose geometries and materials
     this.hitbox.geometry.dispose();
     if (this.hitbox.material instanceof THREE.Material) {
       this.hitbox.material.dispose();
     }
     
-    // Clean up front and back meshes
     this.mesh.children.forEach(child => {
       if (child instanceof THREE.Mesh) {
         child.geometry.dispose();
@@ -341,31 +376,80 @@ export class Card {
   protected calculateEdgePoints(): THREE.Vector3[] {
     const width = 1;
     const height = 1.618;
-    const numAdditional = 4; // Additional points along each edge
+    const radius = 0.05;
+    const numPoints = 24;
     const points: THREE.Vector3[] = [];
 
-    // Bottom edge
-    for (let i = 0; i <= numAdditional; i++) {
-      const t = i / numAdditional;
-      points.push(new THREE.Vector3(-width / 2 + width * t, -height / 2, 0));
+    const addArcPoints = (
+      center: THREE.Vector2,
+      radius: number,
+      startAngle: number,
+      endAngle: number,
+      segments: number
+    ) => {
+      for (let i = 0; i <= segments; i++) {
+        const angle = startAngle + (endAngle - startAngle) * (i / segments);
+        const x = center.x + radius * Math.cos(angle);
+        const y = center.y + radius * Math.sin(angle);
+        points.push(new THREE.Vector3(x, y, 0));
+      }
+    };
+
+    const x = -width / 2;
+    const y = -height / 2;
+    const pointsPerCorner = 3;
+    const pointsPerSide = numPoints / 4 - pointsPerCorner;
+
+    addArcPoints(
+      new THREE.Vector2(x + width - radius, y + radius),
+      radius,
+      -Math.PI / 2,
+      0,
+      pointsPerCorner
+    );
+
+    for (let i = 1; i < pointsPerSide; i++) {
+      const t = i / pointsPerSide;
+      points.push(new THREE.Vector3(x + width, y + radius + (height - 2 * radius) * t, 0));
     }
 
-    // Right edge
-    for (let i = 1; i <= numAdditional; i++) {
-      const t = i / numAdditional;
-      points.push(new THREE.Vector3(width / 2, -height / 2 + height * t, 0));
+    addArcPoints(
+      new THREE.Vector2(x + width - radius, y + height - radius),
+      radius,
+      0,
+      Math.PI / 2,
+      pointsPerCorner
+    );
+
+    for (let i = pointsPerSide - 1; i > 0; i--) {
+      const t = i / pointsPerSide;
+      points.push(new THREE.Vector3(x + width - radius - (width - 2 * radius) * t, y + height, 0));
     }
 
-    // Top edge
-    for (let i = 1; i <= numAdditional; i++) {
-      const t = i / numAdditional;
-      points.push(new THREE.Vector3(width / 2 - width * t, height / 2, 0));
+    addArcPoints(
+      new THREE.Vector2(x + radius, y + height - radius),
+      radius,
+      Math.PI / 2,
+      Math.PI,
+      pointsPerCorner
+    );
+
+    for (let i = pointsPerSide - 1; i > 0; i--) {
+      const t = i / pointsPerSide;
+      points.push(new THREE.Vector3(x, y + height - radius - (height - 2 * radius) * t, 0));
     }
 
-    // Left edge
-    for (let i = 1; i < numAdditional; i++) {
-      const t = i / numAdditional;
-      points.push(new THREE.Vector3(-width / 2, height / 2 - height * t, 0));
+    addArcPoints(
+      new THREE.Vector2(x + radius, y + radius),
+      radius,
+      Math.PI,
+      3 * Math.PI / 2,
+      pointsPerCorner
+    );
+
+    for (let i = 1; i < pointsPerSide; i++) {
+      const t = i / pointsPerSide;
+      points.push(new THREE.Vector3(x + radius + (width - 2 * radius) * t, y, 0));
     }
 
     return points;
