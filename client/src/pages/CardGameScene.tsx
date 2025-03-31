@@ -52,7 +52,7 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
         await api.joinGame(tableId);
         
         const cards = await api.drawCards(tableId);
-        setCardValues([cards[0], cards[0], cards[0]]);
+        setCardValues(cards);
         
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to initialize game');
