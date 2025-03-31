@@ -33,8 +33,8 @@ export class Hand {
   constructor({
     scene,
     cardValues = [],
-    holdingPosition = new THREE.Vector3(0, -6, 5),
-    lyingPosition = new THREE.Vector3(0, -7, 5),
+    holdingPosition = new THREE.Vector3(0, -4, 10),
+    lyingPosition = new THREE.Vector3(0, -6.2, 8),
   }: HandConstructorParams) {
     this.scene = scene;
     this.cardValues = cardValues;
@@ -66,7 +66,7 @@ export class Hand {
       const zPos = i * zOffset + this.holdingPosition.z;
 
       const holdingPosition = new THREE.Vector3(xPos, yPos, zPos);
-      const rotation = new THREE.Euler(-Math.PI * 0.2, 0, angle + Math.PI / 2);
+      const rotation = new THREE.Euler(-Math.PI * 0.2, 0, -angle - Math.PI / 2);
 
       const card = new Card({ 
         scene: this.scene, 
@@ -102,8 +102,11 @@ export class Hand {
     const centerAngle = Math.PI / 2;
 
     this.cards.forEach((card, index) => {
-      const angle =
-        centerAngle + fanSpread * (index / (targetNumCards - 1) - 0.5);
+      const angle = targetNumCards > 1
+        ? centerAngle + fanSpread * (index / (targetNumCards - 1) - 0.5)
+        : centerAngle;
+      
+        console.log("Angle:", angle);
 
       const fanRadiusAdjusted = this.isHolding ? fanRadius : fanRadius * 0.8;
 
@@ -111,11 +114,11 @@ export class Hand {
       const yPos =
         Math.sin(angle) * fanRadiusAdjusted + targetPosition.y;
       const zPos = index * zOffset + targetPosition.z;
-
+      
       const targetholdingPosition = new THREE.Vector3(xPos, yPos, zPos);
       const targetRotation = this.isHolding
         ? new THREE.Euler(
-            - Math.PI * 0.2,
+            -Math.PI * 0.2,
             0,
             angle + Math.PI / 2
           )
@@ -123,7 +126,7 @@ export class Hand {
             Math.PI / 2,
             0,
             angle + Math.PI / 2
-          )
+          );
 
       const tl = gsap.timeline();
 
@@ -138,13 +141,17 @@ export class Hand {
         x: targetRotation.x,
         y: targetRotation.y,
         z: targetRotation.z,
-        duration: 0.5,
+        duration: 0.3,
         ease: "power2.inOut",
         onComplete: () => {
           card.setBasePosition(targetholdingPosition);
           card.getMesh().position.copy(targetholdingPosition);
           card.setBaseRotation(targetRotation);
           card.getMesh().rotation.copy(targetRotation);
+          
+          if (this.isHolding) {
+            card.startFloatingAnimation();
+          }
         },
       }, 0);
     });
