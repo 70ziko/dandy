@@ -1,6 +1,6 @@
 # Dandy - Multiplayer Card Game
 
-A modern multiplayer card game featuring real-time fluid dynamics background effects, built with React and Three.js.
+A modern multiplayer card game with real-time fluid dynamics background effects, built with Bun, React and Three.js. And secure server running on Bun.js.
 
 ## 🎮 Features
 
@@ -47,8 +47,13 @@ A modern multiplayer card game featuring real-time fluid dynamics background eff
 # Clone the repository
 git clone [repository-url]
 
-# Start all services
-docker compose up
+# Building and running all services in dev mode
+docker compose -f docker-compose.dev.yml up --build
+```
+
+```bash
+# Building and running in a production environment
+docker compsoe -f docker-compose.prd.yml up --build
 ```
 
 The application will be available at:
@@ -95,39 +100,3 @@ The project follows a microservices architecture:
 
 - `MONGODB_URI`: MongoDB connection string
 - `REDIS_URL`: Redis connection string
-
-## 🎨 Features in Detail
-
-### Fluid Background
-
-- Real-time WebGL fluid simulation
-- Interactive touch/mouse input
-- Multiple render passes for complex fluid effects
-- Custom shader implementations
-
-### Game Mechanics
-
-- Deck management system
-- Real-time card animations
-- Multiplayer synchronization
-- Guest player support
-
-## 📁 Project Structure
-
-```bash
-├── client/                  # Frontend application
-│   ├── src/
-│   │   ├── components/     # React components
-│   │   │   └── fluidBackground/  # WebGL fluid simulation
-│   │   ├── game/          # Game-specific components
-│   │   ├── contexts/      # React contexts
-│   │   └── services/      # API services
-├── server/                 # Backend application
-│   ├── src/
-│   │   ├── lib/          # Core functionality
-│   │   ├── services/     # Business logic
-│   │   ├── middleware/   # Express middleware
-│   │   ├── routers/     # API routes
-│   │   └── types/       # TypeScript types
-└── docker-compose.yml     # Container orchestration
-```
