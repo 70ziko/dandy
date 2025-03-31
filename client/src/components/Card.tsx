@@ -124,16 +124,16 @@ export class Card {
 
     const frontMaterial = new THREE.MeshPhongMaterial({
       map: frontTexture,
-      side: THREE.FrontSide,
+      side: THREE.DoubleSide,
       shininess: 0,
-      depthTest: false,
+      depthTest: true,
     });
 
     const backMaterial = new THREE.MeshPhongMaterial({
       map: backTexture,
-      side: THREE.FrontSide,
+      side: THREE.DoubleSide,
       shininess: 0,
-      depthTest: false,
+      depthTest: true,
     });
 
     const frontMesh = new THREE.Mesh(roundedShape, frontMaterial);
@@ -573,15 +573,15 @@ export class GuiCard extends Card {
 
       const defaultTexture = new THREE.CanvasTexture(canvas);
       
-      const frontMaterial = new THREE.MeshPhongMaterial({
-        map: defaultTexture,
-        side: THREE.FrontSide,
-        shininess: 0,
-        depthTest: false,
-        polygonOffset: true,
-        polygonOffsetFactor: 1,
-        polygonOffsetUnits: 1,
-      });
+        const frontMaterial = new THREE.MeshPhongMaterial({
+          map: defaultTexture,
+          side: THREE.DoubleSide,
+          shininess: 0,
+          depthTest: true,
+          polygonOffset: true,
+          polygonOffsetFactor: 1,
+          polygonOffsetUnits: 1,
+        });
 
       const group = this.mesh as THREE.Group;
       const [frontMesh, backMesh] = group.children as [THREE.Mesh, THREE.Mesh];
@@ -595,7 +595,7 @@ export class GuiCard extends Card {
         const textureLoader = new THREE.TextureLoader();
         const backMaterial = new THREE.MeshPhongMaterial({
           map: textureLoader.load("/assets/black-reverse.jpg"),
-          side: THREE.FrontSide,
+          side: THREE.DoubleSide,
           shininess: 0,
           depthTest: true,
         });
@@ -613,9 +613,9 @@ export class GuiCard extends Card {
       if (frontMesh && frontMesh.material instanceof THREE.MeshPhongMaterial) {
         const frontMaterial = new THREE.MeshPhongMaterial({
           map: texture,
-          side: THREE.FrontSide,
+          side: THREE.DoubleSide,
           shininess: 0,
-          depthTest: false,
+          depthTest: true,
           polygonOffset: true,
           polygonOffsetFactor: 1,
           polygonOffsetUnits: 1,
@@ -627,7 +627,7 @@ export class GuiCard extends Card {
       if (backMesh && backMesh.material instanceof THREE.MeshPhongMaterial) {
         const backMaterial = new THREE.MeshPhongMaterial({
           map: loader.load("/assets/black-reverse.jpg"),
-          side: THREE.FrontSide,
+          side: THREE.DoubleSide,
           shininess: 0,
           depthTest: true,
         });
