@@ -14,6 +14,12 @@ gsap.registerPlugin(MotionPathPlugin);
 
 type GameParams = Record<'tableId', string | undefined>;
 
+// Interface for the droppable area where cards can be laid
+interface DroppableArea {
+  mesh: THREE.Mesh;
+  isHovered: boolean;
+}
+
 const CardGame: React.FC<CardGameSceneProps> = () => {
   const [_cameraControlsEnabled, setCameraControlsEnabled] = useState(false);
   const cameraControllerRef = useRef<CameraController | null>(null);
@@ -21,6 +27,7 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
   const { guestId } = useGuest();
   const [error, setError] = useState<string | null>(null);
   const [cardValues, setCardValues] = useState<CardValue[]>([]);
+  const droppableAreaRef = useRef<DroppableArea | null>(null);
 
   const mountRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<SceneRefs | null>(null);
@@ -126,6 +133,20 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
       table.position.y = -5;
       scene.add(table);
 
+      // Add droppable area
+      const droppableAreaGeometry = new THREE.PlaneGeometry(2, 3);
+      const droppableAreaMaterial = new THREE.MeshStandardMaterial({
+        color: 0x888800,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.5,
+      });
+      const droppableAreaMesh = new THREE.Mesh(droppableAreaGeometry, droppableAreaMaterial);
+      droppableAreaMesh.rotation.x = -Math.PI / 2;
+      droppableAreaMesh.position.set(0, -4.9, 8);
+      scene.add(droppableAreaMesh);
+      droppableAreaRef.current = { mesh: droppableAreaMesh, isHovered: false };
+
       new Deck({ scene, position: new THREE.Vector3(0, -4.87, 0) });
 
       scene.add(new THREE.AmbientLight(0xffffff, 0.5));
@@ -158,8 +179,26 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
       };
 
       const onMouseMove = (event: MouseEvent) => {
-        if (!handRef.current || !sceneRef.current) return;
+        if (!sceneRef.current) return;
         updateMousePosition(event);
+
+        // Check if mouse is over droppable area
+        if (droppableAreaRef.current && !draggedCard) {
+          raycaster.setFromCamera(mouse, sceneRef.current.camera);
+          const intersects = raycaster.intersectObject(droppableAreaRef.current.mesh, false);
+          const wasHovered = droppableAreaRef.current.isHovered;
+          droppableAreaRef.current.isHovered = intersects.length > 0;
+          
+          // Only update material if hover state changed
+          if (wasHovered !== droppableAreaRef.current.isHovered) {
+            const material = droppableAreaRef.current.mesh.material as THREE.MeshStandardMaterial;
+            material.opacity = droppableAreaRef.current.isHovered ? 0.8 : 0.5;
+            material.color.set(droppableAreaRef.current.isHovered ? 0xaaaa00 : 0x888800);
+            material.needsUpdate = true;
+          }
+        }
+
+        if (!handRef.current) return;
 
         if (draggedCard) {
           raycaster.setFromCamera(mouse, sceneRef.current.camera);
@@ -170,9 +209,20 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
           );
           raycaster.ray.at(distance, dragPosition);
           draggedCard.drag(dragPosition);
+
+          // Check if dragged card is over droppable area
+          if (droppableAreaRef.current) {
+            const intersects = raycaster.intersectObject(droppableAreaRef.current.mesh, false);
+            droppableAreaRef.current.isHovered = intersects.length > 0;
+            const material = droppableAreaRef.current.mesh.material as THREE.MeshStandardMaterial;
+            material.opacity = droppableAreaRef.current.isHovered ? 0.8 : 0.5;
+            material.needsUpdate = true;
+          }
+
           return;
         }
 
+        // Rest of the card hover logic
         if (event.timeStamp - lastRaycastTime < 16) return; // Throttle to ~60fps
         lastRaycastTime = event.timeStamp;
 
@@ -216,10 +266,22 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
         }
       };
 
-      const onMouseUp = () => {
+      const onMouseUp = (event: MouseEvent) => {
         if (draggedCard) {
           draggedCard.endDrag();
           draggedCard = null;
+          return;
+        }
+        
+        // Handle click on droppable area when no card is being dragged
+        if (droppableAreaRef.current) {
+          updateMousePosition(event);
+          raycaster.setFromCamera(mouse, sceneRef.current!.camera);
+          const intersects = raycaster.intersectObject(droppableAreaRef.current.mesh);
+          
+          if (intersects.length > 0) {
+            toggleHandHoldingHandler();
+          }
         }
       };
 
@@ -259,6 +321,16 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
           );
           raycaster.ray.at(distance, dragPosition);
           draggedCard.drag(dragPosition);
+
+          // Check if dragged card is over droppable area
+          if (droppableAreaRef.current) {
+            const intersects = raycaster.intersectObject(droppableAreaRef.current.mesh, false);
+            droppableAreaRef.current.isHovered = intersects.length > 0;
+            const material = droppableAreaRef.current.mesh.material as THREE.MeshStandardMaterial;
+            material.opacity = droppableAreaRef.current.isHovered ? 0.8 : 0.5;
+            material.needsUpdate = true;
+          }
+
           return;
         }
         if (event.timeStamp - lastRaycastTime < 16) return;
