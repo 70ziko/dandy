@@ -9,6 +9,7 @@ import { useGuest } from "../contexts/GuestContext";
 import { api } from "../services/api";
 import type { SceneRefs, CardGameSceneProps, Card, CardValue } from "../types";
 import { CameraController } from "../utils/CameraController";
+import "./CardGameScene.css";
 
 gsap.registerPlugin(MotionPathPlugin);
 
@@ -19,6 +20,10 @@ interface DroppableArea {
   mesh: THREE.Mesh;
   isHovered: boolean;
 }
+
+// Types for poker hands and card values
+type PokerFigure = 'High Card' | 'Pair' | 'Two Pair' | 'Three of a Kind' | 'Straight' | 'Flush' | 'Full House' | 'Four of a Kind' | 'Straight Flush' | 'Royal Flush';
+type CardRank = '9' | '10' | 'J' | 'Q' | 'K' | 'A';
 
 const CardGame: React.FC<CardGameSceneProps> = () => {
   const [_cameraControlsEnabled, setCameraControlsEnabled] = useState(false);
@@ -33,6 +38,48 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
   const sceneRef = useRef<SceneRefs | null>(null);
   const handRef = useRef<Hand | null>(null);
   const animationFrameRef = useRef<number | void>(null);
+
+  // GUI state
+  const [showBetOptions, setShowBetOptions] = useState<boolean>(false);
+  const [showCardRanks, setShowCardRanks] = useState<boolean>(false);
+  const [selectedFigure, setSelectedFigure] = useState<PokerFigure | null>(null);
+
+  // GUI action handlers
+  const handleFold = useCallback(() => {
+    console.log('Fold action triggered');
+    if (tableId) {
+      api.performAction(tableId, 'fold', {})
+        .then(() => console.log('Fold successful'))
+        .catch(err => console.error('Error folding:', err));
+    }
+  }, [tableId]);
+
+  const handleBetClick = useCallback(() => {
+    setShowBetOptions(true);
+  }, []);
+
+  const handleFigureSelect = useCallback((figure: PokerFigure) => {
+    setSelectedFigure(figure);
+    setShowCardRanks(true);
+  }, []);
+
+  const handleRankSelect = useCallback((rank: CardRank) => {
+    console.log(`Bet with ${selectedFigure} of ${rank}s`);
+    if (tableId && selectedFigure) {
+      api.performAction(tableId, 'bet', { figure: selectedFigure, rank })
+        .then(() => console.log('Bet successful'))
+        .catch(err => console.error('Error betting:', err));
+    }
+    setShowBetOptions(false);
+    setShowCardRanks(false);
+    setSelectedFigure(null);
+  }, [tableId, selectedFigure]);
+
+  const handleCancelBet = useCallback(() => {
+    setShowBetOptions(false);
+    setShowCardRanks(false);
+    setSelectedFigure(null);
+  }, []);
 
   const throwCardsHandler = useCallback(() => {
     if (handRef.current) {
@@ -267,7 +314,6 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
           return;
         }
         
-        // Handle click on droppable area when no card is being dragged
         if (droppableAreaRef.current) {
           updateMousePosition(event);
           raycaster.setFromCamera(mouse, sceneRef.current!.camera);
@@ -316,7 +362,6 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
           raycaster.ray.at(distance, dragPosition);
           draggedCard.drag(dragPosition);
 
-          // Check if dragged card is over droppable area
           if (droppableAreaRef.current) {
             const intersects = raycaster.intersectObject(droppableAreaRef.current.mesh, false);
             droppableAreaRef.current.isHovered = intersects.length > 0;
@@ -376,7 +421,6 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
 
     if (!sceneRef.current) return;
     
-    // Initialize camera controller
     if (sceneRef.current.renderer.domElement) {
       cameraControllerRef.current = new CameraController(
         sceneRef.current.camera,
@@ -394,7 +438,6 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
     const cleanupRaycaster = setupRaycaster();
     window.addEventListener("resize", handleResize);
 
-    // Render loop
     const animate = () => {
       if (!sceneRef.current) return;
 
@@ -427,7 +470,6 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
     } else if (event.key.toUpperCase() === "H") {
       toggleHandHoldingHandler();
     } else if (event.key.toUpperCase() === "D") {
-      // Toggle debug camera controls
       setCameraControlsEnabled(prev => {
         if (cameraControllerRef.current) {
           if (!prev) {
@@ -453,7 +495,74 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
     return <div>{error}</div>;
   }
 
-  return <div ref={mountRef} className="w-full h-screen" />;
+  return (
+    <>
+      <div ref={mountRef} className="w-full h-screen" />
+      
+      <div className="gui-overlay">
+        <div className="fold-button-container">
+          <button 
+            onClick={handleFold}
+            className="game-button fold-button"
+          >
+            FOLD
+          </button>
+        </div>
+
+        <div className="bet-button-container">
+          {!showBetOptions ? (
+            <button 
+              onClick={handleBetClick}
+              className="game-button bet-button"
+            >
+              BET
+            </button>
+          ) : !showCardRanks ? (
+            <div className="options-panel poker-figures-grid">
+              <h3 className="poker-figures-title">Select Poker Hand</h3>
+              {['High Card', 'Pair', 'Two Pair', 'Three of a Kind', 'Straight', 
+                'Flush', 'Full House', 'Four of a Kind', 'Straight Flush', 'Royal Flush'].map((figure) => (
+                <button 
+                  key={figure}
+                  onClick={() => handleFigureSelect(figure as PokerFigure)}
+                  className="figure-button"
+                >
+                  {figure}
+                </button>
+              ))}
+              <button 
+                onClick={handleCancelBet}
+                className="cancel-button full-width"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <div className="options-panel">
+              <h3 className="ranks-title">{selectedFigure} of...</h3>
+              <div className="card-ranks-grid">
+                {['9', '10', 'J', 'Q', 'K', 'A'].map((rank) => (
+                  <button 
+                    key={rank}
+                    onClick={() => handleRankSelect(rank as CardRank)}
+                    className="rank-button"
+                  >
+                    {rank}
+                  </button>
+                ))}
+              </div>
+              <button 
+                onClick={handleCancelBet}
+                className="cancel-button"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </>
+  );
 };
 
 export default CardGame;

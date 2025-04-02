@@ -1,0 +1,137 @@
+/* Card Game Scene GUI Styles */
+.gui-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+.fold-button-container {
+  position: absolute;
+  left: 2rem;
+  bottom: 25%;
+  pointer-events: auto;
+}
+
+.bet-button-container {
+  position: absolute;
+  right: 2rem;
+  bottom: 25%;
+  pointer-events: auto;
+}
+
+.game-button {
+  font-weight: bold;
+  padding: 1rem 2rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transform: scale(1);
+  border: none;
+  cursor: pointer;
+}
+
+.game-button:hover {
+  transform: scale(1.05);
+}
+
+.fold-button {
+  background-color: rgba(185, 28, 28, 0.7);
+  color: white;
+}
+
+.fold-button:hover {
+  background-color: rgba(220, 38, 38, 0.9);
+}
+
+.bet-button {
+  background-color: rgba(21, 128, 61, 0.7);
+  color: white;
+}
+
+.bet-button:hover {
+  background-color: rgba(22, 163, 74, 0.9);
+}
+
+.options-panel {
+  background-color: rgba(0, 0, 0, 0.7);
+  padding: 1rem;
+  border-radius: 0.5rem;
+}
+
+.poker-figures-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  max-width: 20rem;
+}
+
+.poker-figures-title {
+  color: white;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  text-align: center;
+  grid-column: span 2;
+}
+
+.figure-button {
+  background-color: rgba(29, 78, 216, 0.8);
+  color: white;
+  font-weight: 500;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.15s;
+  border: none;
+  cursor: pointer;
+}
+
+.figure-button:hover {
+  background-color: rgba(37, 99, 235, 1);
+}
+
+.card-ranks-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.ranks-title {
+  color: white;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.rank-button {
+  background-color: rgba(202, 138, 4, 0.8);
+  color: white;
+  font-weight: bold;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.15s;
+  border: none;
+  cursor: pointer;
+}
+
+.rank-button:hover {
+  background-color: rgba(234, 179, 8, 1);
+}
+
+.cancel-button {
+  background-color: rgba(185, 28, 28, 0.8);
+  color: white;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  width: 100%;
+  margin-top: 0.5rem;
+  border: none;
+  cursor: pointer;
+}
+
+.cancel-button:hover {
+  background-color: rgba(220, 38, 38, 1);
+}
+
+.full-width {
+  grid-column: span 2;
+}
