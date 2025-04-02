@@ -133,7 +133,6 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
       table.position.y = -5;
       scene.add(table);
 
-      // Add droppable area
       const droppableAreaGeometry = new THREE.PlaneGeometry(2, 3);
       const droppableAreaMaterial = new THREE.MeshStandardMaterial({
         color: 0x888800,
@@ -182,14 +181,12 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
         if (!sceneRef.current) return;
         updateMousePosition(event);
 
-        // Check if mouse is over droppable area
         if (droppableAreaRef.current && !draggedCard) {
           raycaster.setFromCamera(mouse, sceneRef.current.camera);
           const intersects = raycaster.intersectObject(droppableAreaRef.current.mesh, false);
           const wasHovered = droppableAreaRef.current.isHovered;
           droppableAreaRef.current.isHovered = intersects.length > 0;
           
-          // Only update material if hover state changed
           if (wasHovered !== droppableAreaRef.current.isHovered) {
             const material = droppableAreaRef.current.mesh.material as THREE.MeshStandardMaterial;
             material.opacity = droppableAreaRef.current.isHovered ? 0.8 : 0.5;
@@ -203,14 +200,12 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
         if (draggedCard) {
           raycaster.setFromCamera(mouse, sceneRef.current.camera);
           const dragPosition = new THREE.Vector3();
-          // Project ray at the card's current distance from camera
           const distance = draggedCard.mesh.position.distanceTo(
             sceneRef.current.camera.position
           );
           raycaster.ray.at(distance, dragPosition);
           draggedCard.drag(dragPosition);
 
-          // Check if dragged card is over droppable area
           if (droppableAreaRef.current) {
             const intersects = raycaster.intersectObject(droppableAreaRef.current.mesh, false);
             droppableAreaRef.current.isHovered = intersects.length > 0;
@@ -222,7 +217,6 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
           return;
         }
 
-        // Rest of the card hover logic
         if (event.timeStamp - lastRaycastTime < 16) return; // Throttle to ~60fps
         lastRaycastTime = event.timeStamp;
 

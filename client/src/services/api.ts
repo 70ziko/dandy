@@ -35,7 +35,6 @@ class ApiService {
   }
 
   private async handleResponse<T>(response: Response): Promise<T> {
-    // can the player steal a guestId?
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
       throw new Error(error.message || 'Network response was not ok');
