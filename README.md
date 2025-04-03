@@ -81,15 +81,6 @@ bun start
 
 or use `npm` with the same commands.
 
-## 🏗 Architecture
-
-The project follows a microservices architecture:
-
-- **Client Service**: React application with Three.js for cards and webGL for fluid simulation
-- **Game Server**: Handles game logic and real-time communication
-- **MongoDB**: Stores game state and user data
-- **Redis**: Manages sessions and provides caching
-
 ## 🔒 Environment Variables
 
 ### Frontend Configuration
