@@ -7,8 +7,9 @@ import { Hand } from "../components/Hand";
 import { Deck } from "../components/Deck";
 import { useGuest } from "../contexts/GuestContext";
 import { api } from "../services/api";
-import type { SceneRefs, CardGameSceneProps, Card, CardValue } from "../types";
+import type { SceneRefs, CardGameSceneProps, Card, CardValue, PokerFigureType, CardRank, CardSuit, PokerFigureParams } from "../types";
 import { CameraController } from "../utils/CameraController";
+import { POKER_FIGURES } from "../config/pokerFigures";
 import "./CardGameScene.css";
 
 gsap.registerPlugin(MotionPathPlugin);
@@ -20,10 +21,6 @@ interface DroppableArea {
   mesh: THREE.Mesh;
   isHovered: boolean;
 }
-
-// Types for poker hands and card values
-type PokerFigure = 'High Card' | 'Pair' | 'Two Pair' | 'Three of a Kind' | 'Straight' | 'Flush' | 'Full House' | 'Four of a Kind' | 'Straight Flush' | 'Royal Flush';
-type CardRank = '9' | '10' | 'J' | 'Q' | 'K' | 'A';
 
 const CardGame: React.FC<CardGameSceneProps> = () => {
   const [_cameraControlsEnabled, setCameraControlsEnabled] = useState(false);
@@ -41,57 +38,139 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
 
   // GUI state
   const [showBetOptions, setShowBetOptions] = useState<boolean>(false);
-  const [showCardRanks, setShowCardRanks] = useState<boolean>(false);
-  const [selectedFigure, setSelectedFigure] = useState<PokerFigure | null>(null);
 
-  // GUI action handlers
-  const handleFold = useCallback(() => {
-    console.log('Fold action triggered');
-    if (tableId) {
-      api.performAction(tableId, 'fold', {})
-        .then(() => console.log('Fold successful'))
-        .catch(err => console.error('Error folding:', err));
-    }
-  }, [tableId]);
-
-  const handleBetClick = useCallback(() => {
-    setShowBetOptions(true);
-  }, []);
-
-  const handleFigureSelect = useCallback((figure: PokerFigure) => {
-    setSelectedFigure(figure);
-    setShowCardRanks(true);
-  }, []);
-
-  const handleRankSelect = useCallback((rank: CardRank) => {
-    console.log(`Bet with ${selectedFigure} of ${rank}s`);
-    if (tableId && selectedFigure) {
-      api.performAction(tableId, 'bet', { figure: selectedFigure, rank })
-        .then(() => console.log('Bet successful'))
-        .catch(err => console.error('Error betting:', err));
-    }
-    setShowBetOptions(false);
-    setShowCardRanks(false);
-    setSelectedFigure(null);
-  }, [tableId, selectedFigure]);
-
-  const handleCancelBet = useCallback(() => {
-    setShowBetOptions(false);
-    setShowCardRanks(false);
-    setSelectedFigure(null);
-  }, []);
-
-  const throwCardsHandler = useCallback(() => {
-    if (handRef.current) {
-      handRef.current.throwCards();
-    }
-  }, []);
+  // Selection state
+  const [selectedFigureType, setSelectedFigureType] = useState<PokerFigureType | null>(null);
+  const [currentStepIndex, setCurrentStepIndex] = useState<number>(0);
+  const [selectedOptions, setSelectedOptions] = useState<(CardRank | CardSuit)[]>([]);
 
   const toggleHandHoldingHandler = useCallback(() => {
     if (handRef.current) {
       handRef.current.toggleHolding();
     }
   }, []);
+
+  // Reset selection state
+  const resetSelection = useCallback(() => {
+    setSelectedFigureType(null);
+    setCurrentStepIndex(0);
+    setSelectedOptions([]);
+    setShowBetOptions(false);
+  }, []);
+
+  // Handle figure selection
+  const handleFigureSelect = useCallback((figureType: PokerFigureType) => {
+    setSelectedFigureType(figureType);
+    setCurrentStepIndex(0);
+    setSelectedOptions([]);
+  }, []);
+
+  // Handle option selection
+  const handleOptionSelect = useCallback((option: CardRank | CardSuit) => {
+    if (!selectedFigureType) return;
+    
+    const currentStep = POKER_FIGURES[selectedFigureType].selectionSteps[currentStepIndex];
+    
+    if (currentStep.type === 'rankPairs') {
+      setSelectedOptions(prev => {
+        const newOptions = [...prev];
+        if (newOptions.includes(option)) {
+          return newOptions.filter(opt => opt !== option);
+        }
+        if (newOptions.length < (currentStep.count || 2)) {
+          newOptions.push(option);
+        }
+        return newOptions;
+      });
+    } else {
+      setSelectedOptions(prev => {
+        const newOptions = [...prev];
+        newOptions[currentStepIndex] = option;
+        return newOptions;
+      });
+    }
+  }, [selectedFigureType, currentStepIndex]);
+
+  // Check if current step is complete
+  const isStepComplete = useCallback(() => {
+    if (!selectedFigureType) return false;
+    
+    const currentStep = POKER_FIGURES[selectedFigureType].selectionSteps[currentStepIndex];
+    
+    if (currentStep.type === 'rankPairs') {
+      return selectedOptions.length === (currentStep.count || 2);
+    }
+    
+    return selectedOptions[currentStepIndex] !== undefined;
+  }, [selectedFigureType, currentStepIndex, selectedOptions]);
+
+  // Handle step confirmation
+  const handleStepConfirm = useCallback(() => {
+    if (!selectedFigureType) return;
+    
+    const figure = POKER_FIGURES[selectedFigureType];
+    
+    if (currentStepIndex < figure.selectionSteps.length - 1) {
+      setCurrentStepIndex(prev => prev + 1);
+    } else {
+      // Construct the payload based on the figure type
+      const payload: PokerFigureParams = (() => {
+        switch (selectedFigureType) {
+          case 'HighCard':
+            return { rank: selectedOptions[0] as CardRank };
+          case 'Pair':
+            return { rank: selectedOptions[0] as CardRank };
+          case 'TwoPair':
+            return {
+              firstPairRank: selectedOptions[0] as CardRank,
+              secondPairRank: selectedOptions[1] as CardRank
+            };
+          case 'ThreeOfAKind':
+            return { rank: selectedOptions[0] as CardRank };
+          case 'Straight':
+            return { highestRank: selectedOptions[0] as CardRank };
+          case 'Flush':
+            return {
+              suit: selectedOptions[0] as CardSuit,
+              highestRank: selectedOptions[1] as CardRank
+            };
+          case 'FullHouse':
+            return {
+              threeOfAKindRank: selectedOptions[0] as CardRank,
+              pairRank: selectedOptions[1] as CardRank
+            };
+          case 'FourOfAKind':
+            return { rank: selectedOptions[0] as CardRank };
+          case 'StraightFlush':
+            return {
+              suit: selectedOptions[0] as CardSuit,
+              highestRank: selectedOptions[1] as CardRank
+            };
+          case 'RoyalFlush':
+            return { suit: selectedOptions[0] as CardSuit };
+          default:
+            throw new Error('Invalid figure type');
+        }
+      })();
+
+      // Log the complete bet payload
+      console.log('Bet payload:', {
+        type: selectedFigureType,
+        params: payload
+      });
+
+      // Send the bet action if we have a tableId
+      if (tableId) {
+        api.performAction(tableId, 'bet', {
+          figure: selectedFigureType,
+          params: payload
+        }).then(() => console.log('Bet successful'))
+          .catch(err => console.error('Error betting:', err));
+      }
+
+      resetSelection();
+    }
+  }, [selectedFigureType, currentStepIndex, selectedOptions, tableId, resetSelection]);
 
   useEffect(() => {
     console.log('tableId:', tableId);
@@ -435,7 +514,6 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
     });
     console.log("handRef.current:", handRef.current);
 
-    const cleanupRaycaster = setupRaycaster();
     window.addEventListener("resize", handleResize);
 
     const animate = () => {
@@ -460,15 +538,18 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
       }
       cleanupScene();
       window.removeEventListener("resize", handleResize);
-      cleanupRaycaster();
     };
   }, [cardValues]);
 
   const onkeydown = useCallback((event: KeyboardEvent) => {
     if (event.key.toUpperCase() === "C") {
-      throwCardsHandler();
+      if (handRef.current) {
+        handRef.current.throwCards();
+      }
     } else if (event.key.toUpperCase() === "H") {
-      toggleHandHoldingHandler();
+      if (handRef.current) {
+        handRef.current.toggleHolding();
+      }
     } else if (event.key.toUpperCase() === "D") {
       setCameraControlsEnabled(prev => {
         if (cameraControllerRef.current) {
@@ -481,7 +562,7 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
         return !prev;
       });
     }
-  }, [throwCardsHandler, toggleHandHoldingHandler]);
+  }, []);
 
   useEffect(() => {
     window.addEventListener("keydown", onkeydown);
@@ -502,7 +583,13 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
       <div className="gui-overlay">
         <div className="fold-button-container">
           <button 
-            onClick={handleFold}
+            onClick={() => {
+              if (tableId) {
+                api.performAction(tableId, 'fold', {})
+                  .then(() => console.log('Fold successful'))
+                  .catch(err => console.error('Error folding:', err));
+              }
+            }}
             className="game-button fold-button"
           >
             FOLD
@@ -512,26 +599,25 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
         <div className="bet-button-container">
           {!showBetOptions ? (
             <button 
-              onClick={handleBetClick}
+              onClick={() => setShowBetOptions(true)}
               className="game-button bet-button"
             >
               BET
             </button>
-          ) : !showCardRanks ? (
+          ) : !selectedFigureType ? (
             <div className="options-panel poker-figures-grid">
               <h3 className="poker-figures-title">Select Poker Hand</h3>
-              {['High Card', 'Pair', 'Two Pair', 'Three of a Kind', 'Straight', 
-                'Flush', 'Full House', 'Four of a Kind', 'Straight Flush', 'Royal Flush'].map((figure) => (
+              {Object.values(POKER_FIGURES).map((figure) => (
                 <button 
-                  key={figure}
-                  onClick={() => handleFigureSelect(figure as PokerFigure)}
+                  key={figure.type}
+                  onClick={() => handleFigureSelect(figure.type)}
                   className="figure-button"
                 >
-                  {figure}
+                  {figure.displayName}
                 </button>
               ))}
               <button 
-                onClick={handleCancelBet}
+                onClick={resetSelection}
                 className="cancel-button full-width"
               >
                 Cancel
@@ -539,20 +625,44 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
             </div>
           ) : (
             <div className="options-panel">
-              <h3 className="ranks-title">{selectedFigure} of...</h3>
-              <div className="card-ranks-grid">
-                {['9', '10', 'J', 'Q', 'K', 'A'].map((rank) => (
-                  <button 
-                    key={rank}
-                    onClick={() => handleRankSelect(rank as CardRank)}
-                    className="rank-button"
-                  >
-                    {rank}
-                  </button>
-                ))}
+              <h3 className="selection-title">
+                {POKER_FIGURES[selectedFigureType].displayName}
+              </h3>
+              <p className="selection-description">
+                {POKER_FIGURES[selectedFigureType].selectionSteps[currentStepIndex].label}
+              </p>
+              
+              <div className="options-grid">
+                {POKER_FIGURES[selectedFigureType].selectionSteps[currentStepIndex].options?.map((option) => {
+                  const isSelected = selectedOptions.includes(option);
+                  const isSuit = POKER_FIGURES[selectedFigureType].selectionSteps[currentStepIndex].type === 'suit';
+                  
+                  return (
+                    <button
+                      key={option}
+                      onClick={() => handleOptionSelect(option)}
+                      className={`option-button ${isSelected ? 'selected' : ''} ${
+                        isSuit ? `suit-${option.toLowerCase()}` : ''
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  );
+                })}
               </div>
+
+              <button
+                onClick={handleStepConfirm}
+                disabled={!isStepComplete()}
+                className="confirm-button"
+              >
+                {currentStepIndex < POKER_FIGURES[selectedFigureType].selectionSteps.length - 1
+                  ? 'Next'
+                  : 'Confirm'}
+              </button>
+
               <button 
-                onClick={handleCancelBet}
+                onClick={resetSelection}
                 className="cancel-button"
               >
                 Cancel
