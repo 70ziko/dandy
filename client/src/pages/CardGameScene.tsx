@@ -16,7 +16,6 @@ gsap.registerPlugin(MotionPathPlugin);
 
 type GameParams = Record<'tableId', string | undefined>;
 
-// Interface for the droppable area where cards can be laid
 interface DroppableArea {
   mesh: THREE.Mesh;
   isHovered: boolean;
@@ -36,10 +35,8 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
   const handRef = useRef<Hand | null>(null);
   const animationFrameRef = useRef<number | void>(null);
 
-  // GUI state
   const [showBetOptions, setShowBetOptions] = useState<boolean>(false);
 
-  // Selection state
   const [selectedFigureType, setSelectedFigureType] = useState<PokerFigureType | null>(null);
   const [currentStepIndex, setCurrentStepIndex] = useState<number>(0);
   const [selectedOptions, setSelectedOptions] = useState<(CardRank | CardSuit)[]>([]);
@@ -50,7 +47,6 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
     }
   }, []);
 
-  // Reset selection state
   const resetSelection = useCallback(() => {
     setSelectedFigureType(null);
     setCurrentStepIndex(0);
@@ -58,14 +54,12 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
     setShowBetOptions(false);
   }, []);
 
-  // Handle figure selection
   const handleFigureSelect = useCallback((figureType: PokerFigureType) => {
     setSelectedFigureType(figureType);
     setCurrentStepIndex(0);
     setSelectedOptions([]);
   }, []);
 
-  // Handle option selection
   const handleOptionSelect = useCallback((option: CardRank | CardSuit) => {
     if (!selectedFigureType) return;
     
@@ -91,7 +85,6 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
     }
   }, [selectedFigureType, currentStepIndex]);
 
-  // Check if current step is complete
   const isStepComplete = useCallback(() => {
     if (!selectedFigureType) return false;
     
@@ -104,7 +97,6 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
     return selectedOptions[currentStepIndex] !== undefined;
   }, [selectedFigureType, currentStepIndex, selectedOptions]);
 
-  // Handle step confirmation
   const handleStepConfirm = useCallback(() => {
     if (!selectedFigureType) return;
     
@@ -113,7 +105,6 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
     if (currentStepIndex < figure.selectionSteps.length - 1) {
       setCurrentStepIndex(prev => prev + 1);
     } else {
-      // Construct the payload based on the figure type
       const payload: PokerFigureParams = (() => {
         switch (selectedFigureType) {
           case 'HighCard':
@@ -153,13 +144,11 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
         }
       })();
 
-      // Log the complete bet payload
       console.log('Bet payload:', {
         type: selectedFigureType,
         params: payload
       });
 
-      // Send the bet action if we have a tableId
       if (tableId) {
         api.performAction(tableId, 'bet', {
           figure: selectedFigureType,
@@ -514,6 +503,7 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
     });
     console.log("handRef.current:", handRef.current);
 
+    const cleanupRaycaster = setupRaycaster();
     window.addEventListener("resize", handleResize);
 
     const animate = () => {
@@ -538,6 +528,11 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
       }
       cleanupScene();
       window.removeEventListener("resize", handleResize);
+      cleanupRaycaster();
+      if (handRef.current) {
+        handRef.current.remove();
+        handRef.current = null;
+      }
     };
   }, [cardValues]);
 
