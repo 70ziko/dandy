@@ -396,9 +396,13 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
       const onTouchStart = (event: TouchEvent) => {
         event.preventDefault();
         if (!handRef.current || !sceneRef.current) return;
+        
         const touch = event.touches[0];
+        
         mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
         mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
+
+        // Check for card interactions
         raycaster.setFromCamera(mouse, sceneRef.current.camera);
         const hitboxes = (handRef.current as any).cards.map(
           (card: Card) => card.hitbox
@@ -413,6 +417,18 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
             card.startDrag(intersected.point);
           }
         }
+
+        // Check for droppable area intersections
+        if (droppableAreaRef.current && !draggedCard) {
+          raycaster.setFromCamera(mouse, sceneRef.current.camera);
+          const intersects = raycaster.intersectObject(droppableAreaRef.current.mesh);
+          
+          if (intersects.length > 0) {
+            toggleHandHoldingHandler();
+            return;
+          }
+        }
+        
       };
 
       const onTouchMove = (event: TouchEvent) => {
@@ -471,9 +487,9 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
       window.addEventListener("mousemove", onMouseMove);
       window.addEventListener("mousedown", onMouseDown);
       window.addEventListener("mouseup", onMouseUp);
-      window.addEventListener("touchstart", onTouchStart);
-      window.addEventListener("touchmove", onTouchMove);
-      window.addEventListener("touchend", onTouchEnd);
+      window.addEventListener("touchstart", onTouchStart, { passive: false });
+      window.addEventListener("touchmove", onTouchMove, { passive: false });
+      window.addEventListener("touchend", onTouchEnd, { passive: false });
 
       return () => {
         window.removeEventListener("mousemove", onMouseMove);
