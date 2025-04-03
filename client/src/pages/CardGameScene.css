@@ -7,21 +7,21 @@
 
 .fold-button-container {
   position: absolute;
-  left: 2rem;
-  bottom: 25%;
+  left: 7%;
+  bottom: 7%;
   pointer-events: auto;
 }
 
 .bet-button-container {
   position: absolute;
-  right: 2rem;
-  bottom: 25%;
+  right: 7%;
+  bottom: 7%;
   pointer-events: auto;
 }
 
 .game-button {
   font-weight: bold;
-  padding: 1rem 2rem;
+  padding: 1rem 4rem;
   border-radius: 0.5rem;
   transition: all 0.2s;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
