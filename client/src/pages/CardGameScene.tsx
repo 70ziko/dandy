@@ -515,7 +515,7 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
     handRef.current = new Hand({
       scene: sceneRef.current.scene,
       cardValues,
-      holdingPosition: new THREE.Vector3(0, -4, 10),
+      holdingPosition: new THREE.Vector3(0, -3, 10),
     });
     console.log("handRef.current:", handRef.current);
 

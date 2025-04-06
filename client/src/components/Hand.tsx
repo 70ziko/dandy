@@ -34,7 +34,7 @@ export class Hand {
     scene,
     cardValues = [],
     holdingPosition = new THREE.Vector3(0, -4, 10),
-    lyingPosition = new THREE.Vector3(0, -6.2, 8),
+    lyingPosition = new THREE.Vector3(0, -4.7, 8.5),
   }: HandConstructorParams) {
     this.scene = scene;
     this.cardValues = cardValues;
@@ -46,6 +46,9 @@ export class Hand {
   }
 
   private calculateFanProperties(numCards: number): FanProperties {
+    if (numCards == 1) { // TODO: Figure out proper math for this and num_cards == 2
+      return { fanRadius: 0, fanSpread: 0, zOffset: 0 };
+    }
     const fanRadius = 1.5 + (numCards + 1) * 0.1;
     const maxSpread = (Math.PI * 2) / 3; // 120 degrees
     const minSpread = Math.PI / 6; // 30 degrees
