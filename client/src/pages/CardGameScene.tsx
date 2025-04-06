@@ -248,7 +248,7 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
       table.position.y = -5;
       scene.add(table);
 
-      const droppableAreaGeometry = new THREE.PlaneGeometry(2, 3);
+      const droppableAreaGeometry = new THREE.PlaneGeometry(5, 3);
       const droppableAreaMaterial = new THREE.MeshStandardMaterial({
         color: 0x888800,
         side: THREE.DoubleSide,
@@ -257,7 +257,7 @@ const CardGame: React.FC<CardGameSceneProps> = () => {
       });
       const droppableAreaMesh = new THREE.Mesh(droppableAreaGeometry, droppableAreaMaterial);
       droppableAreaMesh.rotation.x = -Math.PI / 2;
-      droppableAreaMesh.position.set(0, -4.9, 8);
+      droppableAreaMesh.position.set(0, -4.9, 8.5);
       scene.add(droppableAreaMesh);
       droppableAreaRef.current = { mesh: droppableAreaMesh, isHovered: false };
 
