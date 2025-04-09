@@ -1,5 +1,5 @@
 import { Router } from "express";
-import type { Request, Response, RequestHandler } from "express";
+import type { Request, Response } from "express";
 import { guestService } from "../services/guest";
 
 export const router = Router();
