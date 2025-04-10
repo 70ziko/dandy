@@ -55,7 +55,7 @@ However for broadcasting changes to the clients, user <=> scene interactions, et
 4. Once full, new room gets created
 
 During this an overlay should display (alternatively a component in the corner with card buttons replaced) or a seperate site.
-Once the room is created players are redirected to CardGameScene. The game state is initialized, so each user calls the draw to display the animation and gets their appropriate card(s) decided by the server according to the game state. (Actually it might be fun if the users literally had to take their card into the hand and the order would matter).
+Once the room is created players are redirected to CardGameScene. The game state is initialized, so each user calls the draw api (or a websocket event fires when they load and when all, server sends a trigger) to display the animation and get their appropriate card(s) decided by the server according to the game state.
 
 ### Ranked
 

@@ -58,6 +58,8 @@ const MenuScenePage: React.FC = () => {
           scene,
           alt: "PLAY",
           onClick: () => {
+            // TODO: display a matchmaking overlay, send request to joinRoom
+            // server redirects to game page
             navigate("/game/123");
           },
           position: new THREE.Vector3(-1, -0.5, 0),
