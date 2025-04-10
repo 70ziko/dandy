@@ -57,8 +57,8 @@ class ApiService {
       credentials: 'include',
     });
 
-    console.log('drawCards response:', response);
     const data = await this.handleResponse<DrawResponse>(response);
+    
     console.log('drawCards data:', data);
     return data.data.cards;
   }
@@ -75,14 +75,13 @@ class ApiService {
   }
 
   async joinGame(tableId: string): Promise<void> {
-    // TODO: Implement WebSocket functionality
-    console.log('Joining game:', tableId);
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve();
-      }, 1000);
-    }
-  );
+    const response = await fetch(`${BASE_URL}/${tableId}/join`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      credentials: 'include',
+    });
+
+    await this.handleResponse(response);
   }
 
   async leaveGame(tableId: string): Promise<void> {
