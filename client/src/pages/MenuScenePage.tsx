@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import * as THREE from "three";
 import { gsap } from "gsap";
@@ -8,11 +8,38 @@ import FluidBackground, {
   FluidBackgroundHandle,
 } from "../fluidBackground";
 import { GuiCard } from "../components/Card";
+import { useGuest } from "contexts/GuestContext";
+import useWebsocket from "hooks/useWebsocket";
 
 const MenuScenePage: React.FC = () => {
+  const { guestId, setGuestId } = useGuest();
+  const [matchmaking, setMatchmaking] = useState<boolean>(false);
+  const [players, setPlayers] = useState<string[]>([]);
+  const { subscribe, unsubscribe } = useWebsocket("123");
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fluidRef = useRef<FluidBackgroundHandle>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (matchmaking) {
+      const handlePlayerUpdate = (data: any) => {
+        console.log("Player update received:", data);
+        setPlayers(data.players);
+      }
+      const handleGameStart = (data: any) => {
+        console.log("Game start received:", data);
+        navigate(`/game/${data.tableId}`);
+      }
+      subscribe("playerJoin", handlePlayerUpdate);
+      subscribe("gameStart", handleGameStart); 
+
+      return () => {
+        unsubscribe("playerJoin");
+        unsubscribe("gameStart");
+      }
+    }
+  }
+  , [matchmaking, subscribe, unsubscribe, navigate]);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -53,33 +80,53 @@ const MenuScenePage: React.FC = () => {
 
     const menuCards: GuiCard[] = [];
     try {
-      menuCards.push(
-        new GuiCard({
-          scene,
-          alt: "PLAY",
-          onClick: () => {
-            // TODO: display a matchmaking overlay, send request to joinRoom
-            // server redirects to game page
-            navigate("/game/123");
-          },
-          position: new THREE.Vector3(-1, -0.5, 0),
-          rotation: new THREE.Euler(0, 0, 0),
-          fluidRef: fluidRef as React.RefObject<FluidBackgroundHandle>,
-        })
-      );
-
-      menuCards.push(
-        new GuiCard({
-          scene,
-          alt: "Private Rooms",
-          onClick: () => {
-            console.log("Private Rooms clicked");
-          },
-          position: new THREE.Vector3(1, -0.5, 0),
-          rotation: new THREE.Euler(0, 0, 0),
-          fluidRef: fluidRef as React.RefObject<FluidBackgroundHandle>,
-        })
-      );
+      if (matchmaking) {
+        menuCards.push(
+          new GuiCard({
+            scene,
+            alt: "PLAY",
+            onClick: () => {
+              setMatchmaking(true);
+              // call REST API to start matchmaking and send event to other players
+              console.log("Play clicked");
+              // server redirects to game page
+              navigate("/game/123");
+            },
+            position: new THREE.Vector3(-1, -0.5, 0),
+            rotation: new THREE.Euler(0, 0, 0),
+            fluidRef: fluidRef as React.RefObject<FluidBackgroundHandle>,
+          })
+        );
+  
+        menuCards.push(
+          new GuiCard({
+            scene,
+            alt: "Private Rooms",
+            onClick: () => {
+              console.log("Private Rooms clicked");
+            },
+            position: new THREE.Vector3(1, -0.5, 0),
+            rotation: new THREE.Euler(0, 0, 0),
+            fluidRef: fluidRef as React.RefObject<FluidBackgroundHandle>,
+          })
+        );
+      } else {
+        new GuiCard
+          ({
+            scene,
+            frontTexture: "/assets/icons/player.png",
+            alt: "You",
+            onClick: () => {
+              setMatchmaking(true);
+              // server redirects to game page
+              navigate("/game/123");
+            },
+            position: new THREE.Vector3(-1, -0.5, 0),
+            rotation: new THREE.Euler(0, 0, 0),
+            fluidRef: fluidRef as React.RefObject<FluidBackgroundHandle>,
+          });
+      }
+      
     } catch (error) {
       console.error("Error creating menu cards:", error);
     }
